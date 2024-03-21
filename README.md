@@ -2,7 +2,7 @@
     <img src="https://avatars.githubusercontent.com/u/44686652?v=4" height=100 style="align-self: center;">
     <img src="https://media.discordapp.net/attachments/1172462760530034742/1215056991190392893/image.png?ex=65fb5d01&is=65e8e801&hm=9bdd484fcc715d50b973f4d8feab28ad0862fa68dc7ff435b1b46e8fa6902900&=&format=webp&quality=lossless&width=920&height=936" height=100 style="align-self: center;">
     <div style="padding: 20px; text-align: center;">
-        <h3 style="font-size: 16px;">Project CryptoGraphie part 2</h3>
+        <h3 style="font-size: 16px;">Project CryptoGraphie - 2</h3>
         <h3 style="font-size: 16px;">Guillaume Dorschner & Jules Deleuse</h3>
         <h3 style="font-size: 16px;">A4 - CCC</h3>
     </div>
@@ -32,6 +32,22 @@ We use docker to run the application for simplicity. You can install docker from
 docker compose up
 ```
 
+# What we will be using
+
+All the code is written in Python, and we will be using the following libraries:
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [requests](https://docs.python-requests.org/en/master/)
+- [PostgreSQL database](https://www.postgresql.org/)
+- [cryptography.io](https://cryptography.io/)
+
+```mermaid
+graph LR
+    Client[Client terminal] <--> Server
+    Server[Backend] --> Postgres[PostgreSQL database]
+    Server --> cryptography[cryptography.io]
+```
+
+
 # Diagrams and Explanations
 
 Example of Sequence Diagram.
@@ -42,27 +58,42 @@ Example of Sequence Diagram.
     participant S as Server (Bob)
 
     Note over U,S: Registration Phase
-    Note over U: User chooses a password
-    U->>U: Computes 1/2 OPRF using the password
-    U->>+S: Submits username and OPRF(password)
-    Note over S: Generates OPRF key for the user
-    S->>S: Completes OPRF using the user-specific key
-    S->>-U: Returns user-specific OPRF Key
-    U->>U: Generates a key pair (public U/private U)
-    U->>U: Encrypts private key U + public key S (BpkO) with OPRF -> Envelope
-    U->>+S: Sends encrypted envelope + public key U
-    S->>-S: Stores the envelope, U public key, OPRF key
+        Note over U: User chooses a password, tells its username
+        U->>U: Initiate OPRF (deterministic) flow
+        U->>U: Get Password (pwd) from client in OPRF exchange
+        U->>+S: current state of OPRF : F (pwd, ?)
+        Note over S: Generates a user specific OPRF key for the user
+        S->>S: Completes OPRF using the user-specific key
+        S->>-U: current state of OPRF : F (pwd, key) && server's public key (OPAQUE identity)
+        U->>U: Generates the client's key pair (public U/private U) (OPAQUE identity)
+        U->>U: Computes random key (rwd) from OPRF output
+        U->>U: Encrypts CLIENT private Key & SERVER public key S with rwd -> encrypted envelope
+        U->>+S: Sends encrypted envelope + client unencrypted public key
+        S->>-S: Stores the envelope, U public key, OPRF user specific key, indexed by username
+
 
     Note over U,S: Login Phase
-    U->>U: Computes 1/2 OPRF using the password
-    U->>+S: Requests connection (provides username)
-    U->>+S: Submits OPRF(password) for login
-    S->>S: Completes OPRF using the stored key
-    S->>-U: Returns OPRF result for login
-    S->>-U: Sends back encrypted envelope
-    U->>U: Decrypts envelope using OPRF result
-    Note over U,S: Demonstration (via Diffie-Hellman or ...)
-    U->>+S: Demonstrates possession of the private key
-    S->>-S: Verifies proof, establishes shared secret key
-    Note over U,S: Secure communication established
+        U->>U: Initiate OPRF (deterministic) flow
+        U->>+S: Requests connection (provides username) <br> Current state of OPRF : F (pwd, ?)
+        S->>S: Fetch Client related data using Username
+        S->>S: Completes OPRF using the client specific key
+        S->>-U: Sends back encrypted envelope <br> Current state of OPRF : F (pwd, key)
+        U->>U: Decrypts envelope using OPRF result
+        U->>U: If decryption fails, abort login (cause : wrong password or server spoofing)
+        U->>U: Has : client secret key, server public key
+        U->>U: Has : begin AKE protocole
+        U->>S: AKE : Inputs client's private key + server public key
+        S->>S: Receives AKE demand
+        S->>U: AKE : Inputs server's private key + client public key
+        U->>U: if AKE  successful :
+        U->>U: receives fresh shared key from AKE
+        S->>S: receives fresh shared key from AKE
+
+    Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
+        U->>U: Initiate Login
+        U->>U: Hashes shared key (K) using SHA256
+        U->>U: Signs the hash with client private key
+        U->>S: Sends the signed hash to server
+        S->>S: Verifies the signature using Client public key
+        S->>S: Verifies the hash using shared key (K)
 ```
