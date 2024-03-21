@@ -32,73 +32,37 @@ We use docker to run the application for simplicity. You can install docker from
 docker compose up
 ```
 
-# What we will be using
-
-All the code is written in Python, and we will be using the following libraries:
-- [Flask](https://flask.palletsprojects.com/en/3.0.x/)
-- [PostgreSQL database](https://www.postgresql.org/)
-- [Flask-Login](https://flask-login.readthedocs.io/en/latest/)
-- [Argon2](https://en.wikipedia.org/wiki/Argon2)
-- [Google Tink](https://developers.google.com/tink) for all cryptographic operations.
-
-```mermaid
-graph LR
-    Front[Flask Frontend] <--> Server
-    Database[Postgres Database] <--> Server
-    Server[Flask Backend] --> Postgres[PostgreSQL database]
-    Server[Flask Backend] --> Flask-Login[Flask-Login]
-    Server[Flask Backend] --> Argon2[Argon2]
-    Server[Flask Backend] --> Tink[Google Tink]
-```
-
 # Diagrams and Explanations
 
 Example of Sequence Diagram.
 
-### First part of the project: Password storage
-
-1. Sign up
-    ```mermaid
+```mermaid
     sequenceDiagram
-        User->>Server: Hello I want to signup I'm Bob with password "1234"
-        Server-->>Server: Hash the password with salt
-        Server-->>Database: Store: hashed password & salt
-        Server-->>Server: Generate a session token
-        Server-->>Database: Store: session token
-        Server-->>User: Welcome Bob | send the session token
-    ```
-2. Log in
-    ```mermaid
-    sequenceDiagram
-        User->>Server: Hello, I'm Bob with password "1234"
-        Server-->>Database: Retrieve: hashed password & salt
-        Server-->>Server: Hash the password with the retrieved salt
-        Server-->>Server: Compare the hashed password with the one in the database
-        Server-->>Database: Generate a session token
-        Server-->>User: Welcome Bob | send the session token
-    ```
+    participant U as User (Alice)
+    participant S as Server (Bob)
 
-### Second Part of the Project: PAKE
+    Note over U,S: Registration Phase
+    Note over U: User chooses a password
+    U->>U: Computes 1/2 OPRF using the password
+    U->>+S: Submits username and OPRF(password)
+    Note over S: Generates OPRF key for the user
+    S->>S: Completes OPRF using the user-specific key
+    S->>-U: Returns user-specific OPRF Key
+    U->>U: Generates a key pair (public U/private U)
+    U->>U: Encrypts private key U + public key S (BpkO) with OPRF -> Envelope
+    U->>+S: Sends encrypted envelope + public key U
+    S->>-S: Stores the envelope, U public key, OPRF key
 
-1. Registration with PAKE
-    ```mermaid
-    sequenceDiagram
-        User->>Server: Initiate signup with username "Bob"
-        User->>Server: Perform OPRF with password "1234"
-        Server-->>User: Respond with OPRF result, storing public key
-        User-->>User: Generate private/public key pair
-        User-->>Server: Send encrypted envelope with public key
-        Server-->>Database: Store user's OPRF key, public key, and encrypted envelope
-    ```
-2. Login with PAKE
-    ```mermaid
-    sequenceDiagram
-        User->>Server: Initiate login with username "Bob"
-        User->>Server: Perform OPRF with password "1234"
-        Server-->>Database: Retrieve OPRF key, public key, and encrypted envelope
-        Server-->>User: Send OPRF result and encrypted envelope
-        User-->>User: Decrypt envelope, retrieve keys
-        User->>Server: Start AKE protocol with server, establish shared secret
-        Server-->>User: Confirm login, generate session token
-    ```
-
+    Note over U,S: Login Phase
+    U->>U: Computes 1/2 OPRF using the password
+    U->>+S: Requests connection (provides username)
+    U->>+S: Submits OPRF(password) for login
+    S->>S: Completes OPRF using the stored key
+    S->>-U: Returns OPRF result for login
+    S->>-U: Sends back encrypted envelope
+    U->>U: Decrypts envelope using OPRF result
+    Note over U,S: Demonstration (via Diffie-Hellman or ...)
+    U->>+S: Demonstrates possession of the private key
+    S->>-S: Verifies proof, establishes shared secret key
+    Note over U,S: Secure communication established
+```
