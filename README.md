@@ -67,25 +67,46 @@ graph LR
 
 Example of Sequence Diagram.
 
-```mermaid
+1. Registration Phase
+    ```mermaid
+        sequenceDiagram
+        participant U as User (Alice)
+        participant S as Server (Bob)
+
+        Note over U,S: Registration Phase
+            Note over U: User chooses a password, tells its username
+            U->>U: Initiate OPRF (deterministic) flow
+            U->>U: Get Password (pwd) from client in OPRF exchange
+            U->>+S: current state of OPRF : F (pwd, ?)
+            Note over S: Generates a user specific OPRF key for the user
+            S->>S: Completes OPRF using the user-specific key
+            S->>-U: current state of OPRF : F (pwd, key) && server's public key (OPAQUE identity)
+            U->>U: Generates the client's key pair (public U/private U) (OPAQUE identity)
+            U->>U: Computes random key (rwd) from OPRF output
+            U->>U: Encrypts CLIENT private Key & SERVER public key S with rwd -> encrypted envelope
+            U->>+S: Sends encrypted envelope + client unencrypted public key
+            S->>-S: Stores the envelope, U public key, OPRF user specific key, indexed by username
+
+        Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
+            U->>U: Begin AKE protocole
+            U->>S: AKE : Inputs client's private key + server public key
+            S->>S: Receives AKE demand
+            S->>U: AKE : Inputs server's private key + client public key
+            U->>U: if AKE  successful :
+            U->>U: receives fresh shared key from AKE
+            S->>S: receives fresh shared key from AKE
+            U->>U: Initiate Login
+            U->>U: Hashes shared key (K) using SHA256
+            U->>U: Signs the hash with client private key
+            U->>S: Sends the signed hash to server
+            S->>S: Verifies the signature using Client public key
+            S->>S: Verifies the hash using shared key (K)
+    ```
+2. Login Phase
+    ```mermaid
     sequenceDiagram
     participant U as User (Alice)
     participant S as Server (Bob)
-
-    Note over U,S: Registration Phase
-        Note over U: User chooses a password, tells its username
-        U->>U: Initiate OPRF (deterministic) flow
-        U->>U: Get Password (pwd) from client in OPRF exchange
-        U->>+S: current state of OPRF : F (pwd, ?)
-        Note over S: Generates a user specific OPRF key for the user
-        S->>S: Completes OPRF using the user-specific key
-        S->>-U: current state of OPRF : F (pwd, key) && server's public key (OPAQUE identity)
-        U->>U: Generates the client's key pair (public U/private U) (OPAQUE identity)
-        U->>U: Computes random key (rwd) from OPRF output
-        U->>U: Encrypts CLIENT private Key & SERVER public key S with rwd -> encrypted envelope
-        U->>+S: Sends encrypted envelope + client unencrypted public key
-        S->>-S: Stores the envelope, U public key, OPRF user specific key, indexed by username
-
 
     Note over U,S: Login Phase
         U->>U: Initiate OPRF (deterministic) flow
@@ -95,20 +116,20 @@ Example of Sequence Diagram.
         S->>-U: Sends back encrypted envelope <br> Current state of OPRF : F (pwd, key)
         U->>U: Decrypts envelope using OPRF result
         U->>U: If decryption fails, abort login (cause : wrong password or server spoofing)
-        U->>U: Has : client secret key, server public key
-        U->>U: Has : begin AKE protocole
+        U->>U: client secret key, server public key
+
+    Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
+        U->>U: begin AKE protocole
         U->>S: AKE : Inputs client's private key + server public key
         S->>S: Receives AKE demand
         S->>U: AKE : Inputs server's private key + client public key
         U->>U: if AKE  successful :
         U->>U: receives fresh shared key from AKE
         S->>S: receives fresh shared key from AKE
-
-    Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
         U->>U: Initiate Login
         U->>U: Hashes shared key (K) using SHA256
         U->>U: Signs the hash with client private key
         U->>S: Sends the signed hash to server
         S->>S: Verifies the signature using Client public key
         S->>S: Verifies the hash using shared key (K)
-```
+    ```
