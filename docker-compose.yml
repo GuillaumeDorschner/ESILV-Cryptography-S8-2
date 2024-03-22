@@ -12,11 +12,3 @@ services:
     ports:
       - 5432:5432
     network_mode: "bridge"
-
-  # server:
-  #   image: ghcr.io/guillaumedorschner/serserver-flask:latest
-  #   restart: always
-  #   ports:
-  #     - 80:80
-  #   depends_on:
-  #     - db
