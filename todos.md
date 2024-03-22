@@ -1,5 +1,13 @@
 # Todos
 
+## Shared Functionnality
+
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
+
 ## Client
 
 - [ ] get password from client
@@ -11,14 +19,6 @@
 - [ ] Compute random key (rwd) from OPRF output
 - [ ] Encrypt CLIENT private Key & SERVER public key S with rwd -> encrypted envelope
 - [ ] send : encrytped envelope + unencrypted public key
-- [ ] 
-
-## Shared Functionnality
-
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
 - [ ] 
 
 ## Server

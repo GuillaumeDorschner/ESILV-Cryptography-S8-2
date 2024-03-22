@@ -30,7 +30,7 @@ The second part of your project involves Password-Authenticated Key Exchange (PA
 >     ```
 > 2. terminal 2
 >    ```bash
->     uvicorn server.main:app --reload
+>     flask run --host=0.0.0.0 --port=80
 >     ```
 > 3. docker compose up
 >    ```bash
