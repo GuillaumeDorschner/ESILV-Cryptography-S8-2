@@ -12,6 +12,7 @@ def login(username, password):
 
 
 def main():
+    print("Welcome to the secure messaging system!")
     pass
 
 
