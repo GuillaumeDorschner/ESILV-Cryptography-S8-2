@@ -16,11 +16,11 @@ def index():
 def signup():
     try:
         if request.method == "POST":
-            requestStep = request.form.get("requestStep")
+            request_step = request.form.get("request_step")
             username = request.form.get("username")
-            if requestStep == "1":
-                # Placeholder: Implement the logic for OPRF
-                OPRF_Begin = request.form.get("OPRF_Begin")
+            if request_step == "1":
+                # Placeholder: Implement the logic for oprf
+                oprf_begin = request.form.get("oprf_begin")
 
                 # generate user-specific key
                 oprf_key = auth_manager.generate_user_key()
@@ -34,10 +34,10 @@ def signup():
                 db.session.add(Users(**user))
                 db.session.commit()
 
-                OPRF = auth_manager.perform_oprf(OPRF_Begin, user.oprf_key)
+                oprf = auth_manager.perform_oprf(oprf_begin, user.oprf_key)
 
-                return jsonify({"OPRF": OPRF})
-            elif requestStep == "2":
+                return jsonify({"oprf": oprf, "server_public_key": auth_manager.server_public_key})
+            elif request_step == "2":
                 # Placeholder: Implement the logic save the encrypted envelope
                 encrypted_envelope = request.form.get("encrypted_envelope")
                 public_key = request.form.get("public_key")
@@ -64,9 +64,8 @@ def signup():
 def login():
     try:
         if request.method == "POST":
-            requestStep = request.form.get("requestStep")
             username = request.form.get("username")
-            OPRF_Begin = request.form.get("OPRF_Begin")
+            oprf_begin = request.form.get("oprf_begin")
 
             user = Users.query.filter_by(username=username).first()
 
@@ -74,9 +73,9 @@ def login():
                 flash("User not found")
                 return redirect("/login")
 
-            OPRF = auth_manager.perform_oprf(OPRF_Begin, user.oprf_key)
+            oprf = auth_manager.perform_oprf(oprf_begin, user.oprf_key)
 
-            return jsonify({"OPRF": OPRF, "encrypted_envelope": user.encrypted_envelope})
+            return jsonify({"oprf": oprf, "encrypted_envelope": user.encrypted_envelope})
         else:
             flash("Invalid request")
             return redirect("/login")
@@ -90,11 +89,11 @@ def login():
 def AKE():
     try:
         if request.method == "POST":
-            requestStep = request.form.get("requestStep")
+            request_step = request.form.get("request_step")
             username = request.form.get("username")
-            if requestStep == "1":
+            if request_step == "1":
                 pass
-            elif requestStep == "2":
+            elif request_step == "2":
                 pass
             else:
                 flash("Invalid request")
