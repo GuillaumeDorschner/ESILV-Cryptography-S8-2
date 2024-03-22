@@ -22,6 +22,13 @@ The second part of your project involves Password-Authenticated Key Exchange (PA
 
 ## Installation
 
+:::info
+Temporary instructions for running the project locally.
+1. terminal 1 `python client/main.py`
+2. terminal 2 `cd server; uvicorn main:app --reload`
+4. docker compose up `docker compose up`
+:::
+
 We use docker to run the application for simplicity. You can install docker from [here](https://docs.docker.com/get-docker/).
 
 1. Download docker on your computer
