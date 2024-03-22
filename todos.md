@@ -1,12 +1,26 @@
 # Todos
 
-## Shared Functionnality
+## Client
 
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ] Get password, username from client
+- [ ] OPRF : 1st step : F(pwd,?)
+- [ ] send : OPRF : 1st step : F(pwd,?)
+  /--
+- [ ] receive : OPRF output
+- [ ] Generate the client's asymetric key pair 
+- [ ] Compute random key (rwd) from OPRF output
+- [ ] Encrypt CLIENT private Key & SERVER public key S with rwd -> encrypted envelope
+- [ ] send : encrytped envelope + unencrypted public key
+/--
+- [ ] Decrypt envelop from OPRF
+- [ ] Case : if decryption fails => abort login
+- [ ] Formulate AKE demand.
+- [ ] AKE protocol : Inputs client's private key, server public key
+- [ ] generate share key from successful AKE
+/--
+- [ ] Hash shared key (K) using SHA256
+- [ ] sign hash with client private key
+- [ ] send : signed hash
 
 ## Client
 
