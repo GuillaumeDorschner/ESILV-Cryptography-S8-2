@@ -1,10 +1,9 @@
-from flask_login import UserMixin
-
 from .database import db
 
 
-class Users(UserMixin, db.Model):
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    # warning we had a lot of trouble with the password field
-    password = db.Column(db.LargeBinary)  # password: hachage + salt + cryptage
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    public_key = db.Column(db.Text, nullable=False)
+    encrypted_envelope = db.Column(db.Text, nullable=False)
+    oprf_key = db.Column(db.Text, nullable=False)
