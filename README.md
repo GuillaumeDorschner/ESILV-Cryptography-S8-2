@@ -11,7 +11,7 @@
 
 # Introduction
 
-This project is a comprehensive exploration of cryptographic principles and their application in securing user data. Through a two-part implementation focusing on **password storage** and **Password-Authenticated Key Exchange (PAKE)**, this project demonstrates robust security practices in application development.
+This project is a comprehensive exploration of cryptographic principles and their application in securing user data. Through a two-part implementation focusing on **password storage** [see her](https://github.com/GuillaumeDorschner/ESILV-Cryptography-S8-1) and **Password-Authenticated Key Exchange (PAKE)**, this project demonstrates robust security practices in application development.
 
 
 # Project Implementation
