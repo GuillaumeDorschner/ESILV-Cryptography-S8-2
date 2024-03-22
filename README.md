@@ -116,10 +116,10 @@ Example of Sequence Diagram.
         S->>-U: Sends back encrypted envelope <br> Current state of OPRF : F (pwd, key)
         U->>U: Decrypts envelope using OPRF result
         U->>U: If decryption fails, abort login (cause : wrong password or server spoofing)
-        U->>U: client secret key, server public key
+        U->>U: Has : client secret key, server public key
 
     Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
-        U->>U: begin AKE protocole
+        U->>U: Begin AKE protocole
         U->>S: AKE : Inputs client's private key + server public key
         S->>S: Receives AKE demand
         S->>U: AKE : Inputs server's private key + client public key
