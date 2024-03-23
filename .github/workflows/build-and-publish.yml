@@ -1,0 +1,41 @@
+name: Build and Publish to GHCR
+
+on:
+  push:
+    branches: [ main ]
+    pull_request:
+      branches: [ main ]
+
+jobs:
+  docker-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile.server
+          push: true
+          tags: ghcr.io/guillaumedorschner/esilv-cryptography-s8-2-server:latest
+          
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile.client
+          push: true
+          tags: ghcr.io/guillaumedorschner/esilv-cryptography-s8-2-client:latest
+
+      - name: Build and run with Docker Compose
+        run: |
+          docker-compose up --build -d

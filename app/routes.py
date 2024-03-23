@@ -98,6 +98,7 @@ def AKE():
             if request_step == "1":
                 pass
             elif request_step == "2":
+                print("The following hash should be the same on the server and the client: ")
                 print("Singed hash received: ", request.form.get("signed_hash"))
                 pass
             else:

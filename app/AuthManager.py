@@ -54,5 +54,6 @@ class AuthManager:
         R = C**s
 
         return R
-    
-    def AKE
+
+    def AKE():
+        pass

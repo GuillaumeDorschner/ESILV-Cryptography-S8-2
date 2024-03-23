@@ -1,5 +1,22 @@
 version: '3'
 services:
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
   db:
     image: postgres
     restart: always
