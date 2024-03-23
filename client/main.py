@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify
-import requests
+import os
+
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dh, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.backends import default_backend
-import os
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from flask import Flask
 
 app = Flask(__name__)
 
@@ -32,7 +34,9 @@ def H(password, q):
 # Récupère G (cf Concrete Implemention p.12) : le groupe cyclique de premiers d'ordre q
 # En utilisant l'algo DC 3526
 def C(Hp, q):
-    parameters = dh.generate_parameters(generator=2, key_size=2048, backend=default_backend())
+    parameters = dh.generate_parameters(
+        generator=2, key_size=2048, backend=default_backend()
+    )
     p = parameters.parameter_numbers().p
 
     global r
@@ -83,7 +87,8 @@ def computeOPRF(R, S_pub_key):
     )
 
     S_pub_key_bytes = S_pub_key.public_bytes(
-        encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
 
     concatenated_keys = C_priv_key_bytes + S_pub_key_bytes
@@ -115,7 +120,9 @@ def decrypt_envelop(rwd, M):
 
     # Decrypt the ciphertext using AES-GCM
     try:
-        decrypted_data = aesgcm.decrypt(nonce, ciphertext, None)  # Associated data is set to None
+        decrypted_data = aesgcm.decrypt(
+            nonce, ciphertext, None
+        )  # Associated data is set to None
         return decrypted_data
     except Exception as e:
         # Handle decryption failure (e.g., due to tampering or incorrect key)
@@ -123,10 +130,50 @@ def decrypt_envelop(rwd, M):
         return None
 
 
-# ------------------- AKE -------------------
+# --------------- Diffie Hellman ---------------
 
 
-def AKE(request_step, username, signed_hash):
-    print("The following hash should be the same on the server and the client: ")
-    print("Singed hash with private key: ", request.form.get("signed_hash"))
-    pass
+def AKE(client_private_key_pem: bytes, server_public_key_pem: bytes) -> bytes:
+    """
+    Perform the Authenticated Key Exchange (AKE) using the Diffie-Hellman protocol.
+
+    Args:
+        client_private_key_pem (bytes): The PEM-encoded client's private key.
+        server_public_key_pem (bytes): The PEM-encoded server's public key.
+
+    Returns:
+        bytes: The derived shared key.
+    """
+    client_private_key = serialization.load_pem_public_key(
+        client_private_key_pem, backend=default_backend()
+    )
+
+    server_public_key = serialization.load_pem_public_key(
+        server_public_key_pem, backend=default_backend()
+    )
+
+    shared_key = client_private_key.exchange(server_public_key)
+
+    derived_key = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=None,
+        info=b"handshake data",
+        backend=default_backend(),
+    ).derive(shared_key)
+
+    return derived_key
+
+
+# --------------- In the futur ---------------
+
+
+def encrypt_data(shared_key: bytes, data: str) -> bytes:
+    if shared_key is None:
+        raise Exception("Shared key not set")
+
+    f = Fernet(shared_key)
+
+    encrypted_data = f.decrypt(data)
+
+    return encrypted_data
