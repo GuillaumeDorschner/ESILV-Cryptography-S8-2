@@ -14,7 +14,7 @@ def index():
     return render_template("index.html")
 
 
-@site.route("/signup", methods=["GET", "POST"])
+@site.route("/signup", methods=["POST"])
 def signup():
     try:
         if request.method == "POST":
@@ -56,6 +56,7 @@ def signup():
 
                 db.session.commit()
 
+                return jsonify({"message": "Signup successful"})
             else:
                 flash("Invalid request")
                 return redirect("/signup")
@@ -68,7 +69,7 @@ def signup():
         return redirect("/signup")
 
 
-@site.route("/login", methods=["GET", "POST"])
+@site.route("/login", methods=["POST"])
 def login():
     try:
         if request.method == "POST":
@@ -95,7 +96,7 @@ def login():
         return redirect("/login")
 
 
-@site.route("/AKE", methods=["GET", "POST"])
+@site.route("/AKE", methods=["POST"])
 def AKE():
     try:
         auth_manager.clear_secrect()
