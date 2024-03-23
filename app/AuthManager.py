@@ -1,6 +1,6 @@
+from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.asymmetric import rsa, ec
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from sqlalchemy.orm import Session
 
 
@@ -14,6 +14,7 @@ class AuthManager:
         """
         self.db = db
         self.server_private_key, self.server_public_key = self.generate_server_keys()
+        self.secrect = None
 
     @staticmethod
     def generate_server_keys() -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
@@ -23,7 +24,9 @@ class AuthManager:
         Returns:
             tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]: The generated RSA private and public keys.
         """
-        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+        private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
+        )
         public_key = private_key.public_key()
         return private_key, public_key
 
@@ -51,9 +54,27 @@ class AuthManager:
             R (str): The result of the OPRF.
         """
 
-        R = C**s
+        R = pow(int(C), s.private_numbers().private_value, s.curve().field().n)
 
-        return R
+        return str(R)
 
-    def AKE():
+    # --------------- PAKE ---------------
+
+    def clear_secrect(self):
+        self.secrect = None
+        pass
+
+    def login_required(self, secrect: str):
+        return self.secrect == secrect
+
+    def decrypt_data(self, data: bytes):
+        cipher_key = Fernet.generate_key()
+        cipher = Fernet(cipher_key)
+        decrypted_data = cipher.decrypt(data)
+        return decrypted_data
+
+    # --------------- Diffie Hellman ---------------
+
+    def AKE(self):
+        self.secrect = "ljdslkfjlkd"
         pass

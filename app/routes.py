@@ -1,5 +1,5 @@
-from flask import flash, redirect, render_template, request, jsonify
-from . import app
+from flask import flash, jsonify, redirect, render_template, request
+
 from .AuthManager import AuthManager
 from .database import db
 from .models import Users
@@ -40,7 +40,9 @@ def signup():
 
                 oprf = auth_manager.perform_oprf(oprf_begin, user.oprf_key)
 
-                return jsonify({"oprf": oprf, "server_public_key": auth_manager.server_public_key})
+                return jsonify(
+                    {"oprf": oprf, "server_public_key": auth_manager.server_public_key}
+                )
             elif request_step == "2":
                 # Placeholder: Implement the logic save the encrypted envelope
                 encrypted_envelope = request.form.get("encrypted_envelope")
@@ -79,7 +81,9 @@ def login():
 
             oprf = auth_manager.perform_oprf(oprf_begin, user.oprf_key)
 
-            return jsonify({"oprf": oprf, "encrypted_envelope": user.encrypted_envelope})
+            return jsonify(
+                {"oprf": oprf, "encrypted_envelope": user.encrypted_envelope}
+            )
         else:
             flash("Invalid request")
             return redirect("/login")
@@ -92,13 +96,16 @@ def login():
 @app.route("/AKE", methods=["GET", "POST"])
 def AKE():
     try:
+        auth_manager.clear_secrect()
         if request.method == "POST":
             request_step = request.form.get("request_step")
             username = request.form.get("username")
             if request_step == "1":
                 pass
             elif request_step == "2":
-                print("The following hash should be the same on the server and the client: ")
+                print(
+                    "The following hash should be the same on the server and the client: "
+                )
                 print("Singed hash received: ", request.form.get("signed_hash"))
                 pass
             else:
@@ -117,15 +124,13 @@ def AKE():
 def chat():
     try:
         if request.method == "POST":
-            request_step = request.form.get("request_step")
-            username = request.form.get("username")
-            if request_step == "1":
-                pass
-            elif request_step == "2":
-                pass
-            else:
-                flash("Invalid request")
-                return redirect("/signup")
+            secret = request.form.get("secrect")
+            encrypted_message = request.form.get("message")
+            auth_manager.login_required(secret)
+
+            message = auth_manager.decrypt_data(encrypted_message)
+
+            print("Message received: ", message)
         else:
             flash("Invalid request")
             return redirect("/login")
