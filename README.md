@@ -86,21 +86,7 @@ Example of Sequence Diagram.
             U->>U: Encrypts CLIENT private Key & SERVER public key S with rwd -> encrypted envelope
             U->>+S: Sends encrypted envelope + client unencrypted public key
             S->>-S: Stores the envelope, U public key, OPRF user specific key, indexed by username
-
-        Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
-            U->>U: Begin AKE protocole
-            U->>S: AKE : Inputs client's private key + server public key
-            S->>S: Receives AKE demand
-            S->>U: AKE : Inputs server's private key + client public key
-            U->>U: if AKE  successful :
-            U->>U: receives fresh shared key from AKE
-            S->>S: receives fresh shared key from AKE
-            U->>U: Initiate Login
-            U->>U: Hashes shared key (K) using SHA256
-            U->>U: Signs the hash with client private key
-            U->>S: Sends the signed hash to server
-            S->>S: Verifies the signature using Client public key
-            S->>S: Verifies the hash using shared key (K)
+        Note over U,S: AKE phase
     ```
 2. Login Phase
     ```mermaid
@@ -118,12 +104,17 @@ Example of Sequence Diagram.
         U->>U: If decryption fails, abort login (cause : wrong password or server spoofing)
         U->>U: Has : client secret key, server public key
 
-    Note over U,S: Now both sides have : their private key, the other side's pubblic key, and the shared key
-        U->>U: Begin AKE protocole
-        U->>S: AKE : Inputs client's private key + server public key
-        S->>S: Receives AKE demand
-        S->>U: AKE : Inputs server's private key + client public key
-        U->>U: if AKE  successful :
+    Note over U,S: AKE phase
+    ```
+3. AKE phase
+    ```mermaid
+    sequenceDiagram
+    participant U as User (Alice)
+    participant S as Server (Bob)
+
+    Note over U,S: AKE Phase <br> Both sides have: their private key, the other side's pubblic key, and the shared key
+        U->>+S: AKE : Inputs client's private key + server public key
+        S->>-U: AKE : Inputs server's private key + client public key
         U->>U: receives fresh shared key from AKE
         S->>S: receives fresh shared key from AKE
         U->>U: Initiate Login
