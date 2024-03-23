@@ -46,11 +46,11 @@ def signup():
             elif request_step == "2":
                 # Placeholder: Implement the logic save the encrypted envelope
                 encrypted_envelope = request.form.get("encrypted_envelope")
-                public_key = request.form.get("public_key")
+                client_public_key = request.form.get("client_public_key")
 
                 user = Users.query.filter_by(username=username).first()
                 user.encrypted_envelope = encrypted_envelope
-                user.public_key = public_key
+                user.client_public_key = client_public_key
 
                 db.session.commit()
 
@@ -98,19 +98,15 @@ def AKE():
     try:
         auth_manager.clear_secrect()
         if request.method == "POST":
-            request_step = request.form.get("request_step")
             username = request.form.get("username")
-            if request_step == "1":
-                pass
-            elif request_step == "2":
-                print(
-                    "The following hash should be the same on the server and the client: "
-                )
-                print("Singed hash received: ", request.form.get("signed_hash"))
-                pass
-            else:
-                flash("Invalid request")
-                return redirect("/signup")
+            client_public_key = request.form.get("client_public_key")
+            shared_key = auth_manager.AKE(client_public_key)
+            print(
+                "The following shared_key should be the same on the server and the client: ",
+                shared_key,
+            )
+
+            return jsonify({"message": "AKE successful"})
         else:
             flash("Invalid request")
             return redirect("/login")
@@ -120,21 +116,22 @@ def AKE():
         return redirect("/login")
 
 
-@app.route("/chat", methods=["GET", "POST"])
-def chat():
-    try:
-        if request.method == "POST":
-            secret = request.form.get("secrect")
-            encrypted_message = request.form.get("message")
-            auth_manager.login_required(secret)
+# @app.route("/chat", methods=["GET", "POST"])
+# def chat():
+#     try:
+#         if request.method == "POST":
+#             secret = request.form.get("secrect")
+#             encrypted_message = request.form.get("message")
+# # not like that because the user don't send the shared key (use for encryption) the login should be with something else
+#             # auth_manager.login_required(secret)
 
-            message = auth_manager.decrypt_data(encrypted_message)
+#             message = auth_manager.decrypt_data(encrypted_message)
 
-            print("Message received: ", message)
-        else:
-            flash("Invalid request")
-            return redirect("/login")
-    except Exception as e:
-        print(e)
-        flash("An error occurred during signup")
-        return redirect("/login")
+#             print("Message received: ", message)
+#         else:
+#             flash("Invalid request")
+#             return redirect("/login")
+#     except Exception as e:
+#         print(e)
+#         flash("An error occurred during signup")
+#         return redirect("/login")
