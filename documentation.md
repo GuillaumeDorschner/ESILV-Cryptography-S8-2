@@ -7,17 +7,17 @@ in
 - **Step 1 (POST)**
     ```json
     {
-        "request_step": "1",
-        "username": "jules",
-        "oprf_begin": "oprfBeginData"
+        "request_step": "1", // int
+        "username": "jules", // string
+        "oprf_begin": "oprfBeginData" // bytes
     }
     ```
 out
 - **Step 1 Response**
     ```json
     {
-        "oprf": "oprfResult",
-        "server_public_key": "key"
+        "oprf": "oprfResult", // bytes
+        "server_public_key": "key" // bytes
     }
     ```
 
@@ -25,17 +25,17 @@ in
 - **Step 2 (POST)**
     ```json
     {
-        "request_step": "2",
-        "username": "jules",
-        "encrypted_envelope": "encryptedEnvelopeData",
-        "public_key": "userPublicKey"
+        "request_step": "2", // int
+        "username": "jules", // string
+        "encrypted_envelope": "encryptedEnvelopeData", // bytes
+        "client_public_key": "userPublicKey" // bytes
     }
     ```
 out
 - **Step 2 Response**
     ```json
     {
-        "message": "Signup successful"
+        "message": "Signup successful" // string
     }
     ```
 
@@ -44,8 +44,8 @@ in
 - **POST**: For logging in, requiring username and OPRF data.
     ```json
     {
-        "username": "exampleUsername",
-        "oprf_begin": "oprfBeginData"
+        "username": "jules", // string
+        "oprf_begin": "oprfBeginData" //bytes
     }
     ```
 
@@ -53,24 +53,25 @@ out
 - **POST Response**:
     ```json
     {
-        "oprf": "oprfResult",
-        "encrypted_envelope": "encryptedEnvelopeData"
+        "oprf": "oprfResult", // bytes
+        "encrypted_envelope": "encryptedEnvelopeData" // bytes
     }
     ```
 
-> **Note**: soon
-> ### `/AKE` Endpoint
-> in
-> - **General AKE Request (assuming steps)**:
->     ```json
->     {
->         
->     }
->     ```
-> out
-> - **General AKE Response** (The specific output would depend on the AKE process step and implementation):
->     ```json
->     {
->         
->     }
->     ```
+### `/AKE` Endpoint
+in
+- **POST**: For AKE, requiring username and OPRF data.
+    ```json
+    {
+        "username": "jules", // string
+        "client_public_key": "userPublicKey" // bytes
+    }
+    ```
+
+out
+- **POST Response**:
+    ```json
+    {
+        "message": "AKE successful" // string
+    }
+    ```
