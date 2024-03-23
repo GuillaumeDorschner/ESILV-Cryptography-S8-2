@@ -20,6 +20,11 @@ def signup():
             username = request.form.get("username")
             if request_step == "1":
                 # Placeholder: Implement the logic for oprf
+
+                if Users.query.filter_by(username=username).first() is not None:
+                    flash("User already exists")
+                    return redirect("/signup")
+
                 oprf_begin = request.form.get("oprf_begin")
 
                 # generate user-specific key
@@ -28,7 +33,6 @@ def signup():
                 user = {
                     "username": username,
                     "oprf_key": oprf_key,
-                    # "encrypted_envelope": "encrypted_envelope_placeholder",
                 }
 
                 db.session.add(Users(**user))
@@ -87,6 +91,29 @@ def login():
 
 @app.route("/AKE", methods=["GET", "POST"])
 def AKE():
+    try:
+        if request.method == "POST":
+            request_step = request.form.get("request_step")
+            username = request.form.get("username")
+            if request_step == "1":
+                pass
+            elif request_step == "2":
+                print("Singed hash received: ", request.form.get("signed_hash"))
+                pass
+            else:
+                flash("Invalid request")
+                return redirect("/signup")
+        else:
+            flash("Invalid request")
+            return redirect("/login")
+    except Exception as e:
+        print(e)
+        flash("An error occurred during signup")
+        return redirect("/login")
+
+
+@app.route("/chat", methods=["GET", "POST"])
+def chat():
     try:
         if request.method == "POST":
             request_step = request.form.get("request_step")
