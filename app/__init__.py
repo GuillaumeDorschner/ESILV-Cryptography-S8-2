@@ -2,9 +2,14 @@ import os
 
 from flask import Flask
 
+from .routes import site
+
+
 from .database import db
 
 app = Flask(__name__)
+app.register_blueprint(site)
+
 
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "default-secret-key")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")

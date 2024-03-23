@@ -1,18 +1,20 @@
-from flask import flash, jsonify, redirect, render_template, request
-
+from flask import flash, jsonify, redirect, render_template, request, Blueprint
 from .AuthManager import AuthManager
 from .database import db
 from .models import Users
 
+
+site = Blueprint('simple_page', __name__, template_folder='templates')
+
 auth_manager = AuthManager(db)
 
 
-@app.route("/")
+@site.route("/")
 def index():
     return render_template("index.html")
 
 
-@app.route("/signup", methods=["GET", "POST"])
+@site.route("/signup", methods=["GET", "POST"])
 def signup():
     try:
         if request.method == "POST":
@@ -66,7 +68,7 @@ def signup():
         return redirect("/signup")
 
 
-@app.route("/login", methods=["GET", "POST"])
+@site.route("/login", methods=["GET", "POST"])
 def login():
     try:
         if request.method == "POST":
@@ -93,7 +95,7 @@ def login():
         return redirect("/login")
 
 
-@app.route("/AKE", methods=["GET", "POST"])
+@site.route("/AKE", methods=["GET", "POST"])
 def AKE():
     try:
         auth_manager.clear_secrect()
@@ -116,7 +118,7 @@ def AKE():
         return redirect("/login")
 
 
-# @app.route("/chat", methods=["GET", "POST"])
+# @site.route("/chat", methods=["GET", "POST"])
 # def chat():
 #     try:
 #         if request.method == "POST":
