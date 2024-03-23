@@ -1,7 +1,7 @@
 from .database import db
 
 
-class User(db.Model):
+class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     oprf_key = db.Column(db.LargeBinary, nullable=False)
