@@ -23,18 +23,18 @@ The second part of your project involves Password-Authenticated Key Exchange (PA
 ## Installation
 
 > [!NOTE]
-> Temporary instructions for running the project locally.
-> 1. terminal 1
+> Temporary instructions for running the project locally. Respect the order:
+> 1. docker compose up
 >    ```bash
->     python -m client.main
+>     docker-compose up
 >     ```
 > 2. terminal 2
 >    ```bash
 >     flask run --host=0.0.0.0 --port=80
 >     ```
-> 3. docker compose up
+> 3. terminal 1
 >    ```bash
->     docker-compose up
+>     python -m client.main
 >     ```
 
 We use docker to run the application for simplicity. You can install docker from [here](https://docs.docker.com/get-docker/).

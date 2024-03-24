@@ -6,9 +6,6 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dh, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from flask import Flask
-
-app = Flask(__name__)
 
 
 # https://datatracker.ietf.org/doc/html/rfc3526#page-3
