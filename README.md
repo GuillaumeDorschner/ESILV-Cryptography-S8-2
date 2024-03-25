@@ -22,8 +22,8 @@ The second part of your project involves Password-Authenticated Key Exchange (PA
 
 ## Installation
 
-> [!NOTE]
-> Temporary instructions for running the project locally. Respect the order:
+> [!WARNING]
+> For running the project locally in an easier-to-debug manner, follow the order below. In the future, we will use Docker-compose for project execution. Respect the following order:
 > 1. docker compose up
 >    ```bash
 >     docker-compose up
