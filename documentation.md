@@ -7,16 +7,16 @@ in
 - **Step 1 (POST)**
     ```json
     {
-        "request_step": "1", // int
+        "request_step": 1, // int
         "username": "jules", // string
-        "oprf_begin": "oprfBeginData" // int
+        "oprf_begin": "oprfBeginData" // bytes
     }
     ```
 out
 - **Step 1 Response**
     ```json
     {
-        "oprf": "oprfResult", // int
+        "oprf": "oprfResult", // bytes
         "server_public_key": "key" // bytes
     }
     ```
@@ -25,7 +25,7 @@ in
 - **Step 2 (POST)**
     ```json
     {
-        "request_step": "2", // int
+        "request_step": 2, // int
         "username": "jules", // string
         "encrypted_envelope": "encryptedEnvelopeData", // bytes
         "client_public_key": "userPublicKey" // bytes
@@ -45,7 +45,7 @@ in
     ```json
     {
         "username": "jules", // string
-        "oprf_begin": "oprfBeginData" // int
+        "oprf_begin": "oprfBeginData" // bytes
     }
     ```
 
@@ -53,7 +53,7 @@ out
 - **POST Response**:
     ```json
     {
-        "oprf": "oprfResult", // int
+        "oprf": "oprfResult", // bytes
         "encrypted_envelope": "encryptedEnvelopeData" // bytes
     }
     ```
