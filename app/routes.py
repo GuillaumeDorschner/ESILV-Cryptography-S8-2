@@ -1,10 +1,10 @@
-from flask import flash, jsonify, redirect, render_template, request, Blueprint
+from flask import Blueprint, flash, jsonify, redirect, render_template, request
+
 from .AuthManager import AuthManager
 from .database import db
 from .models import Users
 
-
-site = Blueprint('simple_page', __name__, template_folder='templates')
+site = Blueprint("simple_page", __name__, template_folder="templates")
 
 auth_manager = AuthManager(db)
 
@@ -18,16 +18,20 @@ def index():
 def signup():
     try:
         if request.method == "POST":
-            request_step = request.form.get("request_step")
-            username = request.form.get("username")
-            if request_step == "1":
+            data = request.json
+            if data is None:
+                flash("Invalid request")
+                return redirect("/signup")
+            request_step = data.get("request_step")
+            username = data.get("username")
+            if request_step == 1:
                 # Placeholder: Implement the logic for oprf
 
                 if Users.query.filter_by(username=username).first() is not None:
                     flash("User already exists")
                     return redirect("/signup")
 
-                oprf_begin = request.form.get("oprf_begin")
+                oprf_begin = data.get("oprf_begin")
 
                 # generate user-specific key
                 oprf_key = auth_manager.generate_user_key()
@@ -40,15 +44,15 @@ def signup():
                 db.session.add(Users(**user))
                 db.session.commit()
 
-                oprf = auth_manager.perform_oprf(oprf_begin, user.oprf_key)
+                oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
 
                 return jsonify(
                     {"oprf": oprf, "server_public_key": auth_manager.server_public_key}
                 )
-            elif request_step == "2":
+            elif request_step == 2:
                 # Placeholder: Implement the logic save the encrypted envelope
-                encrypted_envelope = request.form.get("encrypted_envelope")
-                client_public_key = request.form.get("client_public_key")
+                encrypted_envelope = data.get("encrypted_envelope")
+                client_public_key = data.get("client_public_key")
 
                 user = Users.query.filter_by(username=username).first()
                 user.encrypted_envelope = encrypted_envelope
@@ -73,8 +77,13 @@ def signup():
 def login():
     try:
         if request.method == "POST":
-            username = request.form.get("username")
-            oprf_begin = request.form.get("oprf_begin")
+            data = request.json
+            if data is None:
+                flash("Invalid request")
+                return redirect("/login")
+
+            username = data.get("username")
+            oprf_begin = data.get("oprf_begin")
 
             user = Users.query.filter_by(username=username).first()
 
@@ -82,10 +91,10 @@ def login():
                 flash("User not found")
                 return redirect("/login")
 
-            oprf = auth_manager.perform_oprf(oprf_begin, user.oprf_key)
+            oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
 
             return jsonify(
-                {"oprf": oprf, "encrypted_envelope": user.encrypted_envelope}
+                {"oprf": oprf, "encrypted_envelope": user["encrypted_envelope"]}
             )
         else:
             flash("Invalid request")
@@ -99,10 +108,15 @@ def login():
 @site.route("/AKE", methods=["POST"])
 def AKE():
     try:
-        auth_manager.clear_secrect()
+        auth_manager.clear_shared_key()
         if request.method == "POST":
-            username = request.form.get("username")
-            client_public_key = request.form.get("client_public_key")
+            data = request.json
+            if data is None:
+                flash("Invalid request")
+                return redirect("/login")
+
+            username = data.get("username")
+            client_public_key = data.get("client_public_key")
             shared_key = auth_manager.AKE(client_public_key)
             print(
                 "The following shared_key should be the same on the server and the client: ",
@@ -123,8 +137,12 @@ def AKE():
 # def chat():
 #     try:
 #         if request.method == "POST":
-#             secret = request.form.get("secrect")
-#             encrypted_message = request.form.get("message")
+#             data = request.json
+#             if data is None:
+#                 flash("Invalid request")
+#                 return redirect("/login")
+#             secret = data.get("secrect")
+#             encrypted_message = data.get("message")
 # # not like that because the user don't send the shared key (use for encryption) the login should be with something else
 #             # auth_manager.login_required(secret)
 

@@ -1,7 +1,9 @@
+import secrets
+
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, ec
+from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from sqlalchemy.orm import Session
 
@@ -24,17 +26,21 @@ class AuthManager:
         self.db = db
         self.shared_key: bytes = None
 
-    def generate_user_key(self) -> ec.EllipticCurvePrivateKey:
+    def generate_user_key(self) -> int:
         """
         Generate a user-specific elliptic curve private key for the OPRF (Oblivious Pseudo-Random Function).
 
         Returns:
-            ec.EllipticCurvePrivateKey: The generated elliptic curve private key.
+            ec.EllipticCurvePrivateKey: The generated salt.
         """
-        private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
-        return private_key
 
-    def perform_oprf(self, C: str, s: ec.EllipticCurvePrivateKey) -> str:
+        group_size_bits = 256
+
+        s = secrets.randbelow(2**group_size_bits)
+
+        return s
+
+    def perform_oprf(self, C: int, s: int) -> int:
         """
         Perform an Oblivious Pseudo-Random Function (OPRF) with the user-specific key.
 
@@ -48,9 +54,9 @@ class AuthManager:
             R (str): The result of the OPRF.
         """
 
-        R = pow(int(C), s.private_numbers().private_value, s.curve().field().n)
+        R = pow(int(C), s)
 
-        return str(R)
+        return R
 
     # --------------- Diffie Hellman ---------------
 
