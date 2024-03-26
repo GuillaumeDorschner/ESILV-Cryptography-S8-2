@@ -1,9 +1,9 @@
-import secrets
+from typing import Optional
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives.asymmetric import dh, ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from sqlalchemy.orm import Session
 
@@ -24,39 +24,49 @@ class AuthManager:
             db (Session): The SQLAlchemy session instance to interact with the database.
         """
         self.db = db
-        self.shared_key: bytes = None
+        self.shared_key: Optional[bytes] = None
 
-    def generate_user_key(self) -> int:
+    def generate_user_key(self) -> bytes:
         """
-        Generate a user-specific elliptic curve private key for the OPRF (Oblivious Pseudo-Random Function).
+        Generate a user-specific private key for the OPRF (Oblivious Pseudo-Random Function) and return it as bytes.
+
+        ?? the key is a salt (how do the salt) or an ellipticcurve ??
 
         Returns:
-            ec.EllipticCurvePrivateKey: The generated salt.
+            bytes: The private key serialized as bytes.
         """
 
-        group_size_bits = 256
+        private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
 
-        s = secrets.randbelow(2**group_size_bits)
+        private_key_bytes = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
 
-        return s
+        return private_key_bytes
 
-    def perform_oprf(self, C: int, s: int) -> int:
+    def perform_oprf(self, C_bytes: bytes, s_bytes: bytes) -> bytes:
         """
-        Perform an Oblivious Pseudo-Random Function (OPRF) with the user-specific key.
-
-        Calcul is the following: R = C^s
-
+        Perform an OPRF operation using a private key and an input C, both provided as bytes.
         Args:
-            C (str): The input data for the OPRF.
-            s (ec.EllipticCurvePrivateKey): The user-specific private key used in the OPRF.
+            C_bytes (bytes): The input C for the OPRF, as bytes.
+            s_bytes (bytes): user specific key for the OPRF, as bytes.
 
         Returns:
-            R (str): The result of the OPRF.
+            bytes: The result of the OPRF operation.
         """
 
-        R = pow(int(C), s)
+        s = int.from_bytes(s_bytes, byteorder="big")
+        C = int.from_bytes(C_bytes, byteorder="big")
 
-        return R
+        # Perform OPRF operation: R = C^s mod p or R = C^s the project brief is not even clear ⚠️
+        p = dontknow
+        R = pow(C, s, p)  # ?? what is p need to be the same as the client ??
+
+        R_bytes = R.to_bytes(R, "big")
+
+        return R_bytes
 
     # --------------- Diffie Hellman ---------------
 
@@ -91,6 +101,9 @@ class AuthManager:
     # --------------- PAKE ---------------
 
     def clear_shared_key(self):
+        """
+        Clear the shared key not ideal for mult user. But it's a simple example.
+        """
         self.shared_key = None
 
     # # not like that because the user don't send the shared key (use for encryption) the login should be with something else
@@ -98,6 +111,15 @@ class AuthManager:
     #     return self.shared_key == shared_key
 
     def decrypt_data(self, encrypted_data: bytes) -> str:
+        """
+        Decrypt the encrypted data using the shared key.
+
+        Args:
+            encrypted_data (bytes): The encrypted data to decrypt.
+
+        Returns:
+            str: The decrypted data as a string.
+        """
         if self.shared_key is None:
             raise Exception("Shared key not set")
 

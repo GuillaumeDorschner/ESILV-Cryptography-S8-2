@@ -115,7 +115,7 @@ def AKE():
                 flash("Invalid request")
                 return redirect("/login")
 
-            username = data.get("username")
+            # username = data.get("username")
             client_public_key = data.get("client_public_key")
             shared_key = auth_manager.AKE(client_public_key)
             print(
