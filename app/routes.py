@@ -17,53 +17,47 @@ def index():
 @site.route("/signup", methods=["POST"])
 def signup():
     try:
-        if request.method == "POST":
-            data = request.json
-            if data is None:
-                flash("Invalid request")
+        data = request.json
+        if data is None:
+            flash("Invalid request")
+            return redirect("/signup")
+        request_step = data.get("request_step")
+        username = data.get("username")
+        if request_step == 1:
+            # Placeholder: Implement the logic for oprf
+            if Users.query.filter_by(username=username).first() is not None:
+                flash("User already exists")
                 return redirect("/signup")
-            request_step = data.get("request_step")
-            username = data.get("username")
-            if request_step == 1:
-                # Placeholder: Implement the logic for oprf
 
-                if Users.query.filter_by(username=username).first() is not None:
-                    flash("User already exists")
-                    return redirect("/signup")
+            oprf_begin = data.get("oprf_begin")
 
-                oprf_begin = data.get("oprf_begin")
+            oprf_key = auth_manager.generate_user_key()
 
-                # generate user-specific key
-                oprf_key = auth_manager.generate_user_key()
+            user = {
+                "username": username,
+                "oprf_key": oprf_key,
+            }
 
-                user = {
-                    "username": username,
-                    "oprf_key": oprf_key,
-                }
+            db.session.add(Users(**user))
+            db.session.commit()
 
-                db.session.add(Users(**user))
-                db.session.commit()
+            oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
 
-                oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
+            return jsonify(
+                {"oprf": oprf, "server_public_key": auth_manager.server_public_key}
+            )
+        elif request_step == 2:
+            # Placeholder: Implement the logic save the encrypted envelope
+            encrypted_envelope = data.get("encrypted_envelope")
+            client_public_key = data.get("client_public_key")
 
-                return jsonify(
-                    {"oprf": oprf, "server_public_key": auth_manager.server_public_key}
-                )
-            elif request_step == 2:
-                # Placeholder: Implement the logic save the encrypted envelope
-                encrypted_envelope = data.get("encrypted_envelope")
-                client_public_key = data.get("client_public_key")
+            user = Users.query.filter_by(username=username).first()
+            user.encrypted_envelope = encrypted_envelope
+            user.client_public_key = client_public_key
 
-                user = Users.query.filter_by(username=username).first()
-                user.encrypted_envelope = encrypted_envelope
-                user.client_public_key = client_public_key
+            db.session.commit()
 
-                db.session.commit()
-
-                return jsonify({"message": "Signup successful"})
-            else:
-                flash("Invalid request")
-                return redirect("/signup")
+            return jsonify({"message": "Signup successful"})
         else:
             flash("Invalid request")
             return redirect("/signup")
@@ -76,29 +70,23 @@ def signup():
 @site.route("/login", methods=["POST"])
 def login():
     try:
-        if request.method == "POST":
-            data = request.json
-            if data is None:
-                flash("Invalid request")
-                return redirect("/login")
-
-            username = data.get("username")
-            oprf_begin = data.get("oprf_begin")
-
-            user = Users.query.filter_by(username=username).first()
-
-            if user is None:
-                flash("User not found")
-                return redirect("/login")
-
-            oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
-
-            return jsonify(
-                {"oprf": oprf, "encrypted_envelope": user["encrypted_envelope"]}
-            )
-        else:
+        data = request.json
+        if data is None:
             flash("Invalid request")
             return redirect("/login")
+
+        username = data.get("username")
+        oprf_begin = data.get("oprf_begin")
+
+        user = Users.query.filter_by(username=username).first()
+
+        if user is None:
+            flash("User not found")
+            return redirect("/login")
+
+        oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
+
+        return jsonify({"oprf": oprf, "encrypted_envelope": user["encrypted_envelope"]})
     except Exception as e:
         print(e)
         flash("An error occurred during login")
@@ -109,24 +97,20 @@ def login():
 def AKE():
     try:
         auth_manager.clear_shared_key()
-        if request.method == "POST":
-            data = request.json
-            if data is None:
-                flash("Invalid request")
-                return redirect("/login")
-
-            # username = data.get("username")
-            client_public_key = data.get("client_public_key")
-            shared_key = auth_manager.AKE(client_public_key)
-            print(
-                "The following shared_key should be the same on the server and the client: ",
-                shared_key,
-            )
-
-            return jsonify({"message": "AKE successful"})
-        else:
+        data = request.json
+        if data is None:
             flash("Invalid request")
             return redirect("/login")
+
+        # username = data.get("username")
+        client_public_key = data.get("client_public_key")
+        shared_key = auth_manager.AKE(client_public_key)
+        print(
+            "The following shared_key should be the same on the server and the client: ",
+            shared_key,
+        )
+
+        return jsonify({"message": "AKE successful"})
     except Exception as e:
         print(e)
         flash("An error occurred during signup")

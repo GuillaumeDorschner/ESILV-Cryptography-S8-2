@@ -1,10 +1,10 @@
 from typing import Optional
 
-from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dh, ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from sqlalchemy.orm import Session
 
 
@@ -40,7 +40,7 @@ class AuthManager:
 
         private_key_bytes = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
 
@@ -49,22 +49,33 @@ class AuthManager:
     def perform_oprf(self, C_bytes: bytes, s_bytes: bytes) -> bytes:
         """
         Perform an OPRF operation using a private key and an input C, both provided as bytes.
+
         Args:
-            C_bytes (bytes): The input C for the OPRF, as bytes.
-            s_bytes (bytes): user specific key for the OPRF, as bytes.
+            C_bytes (bytes): The input C for the OPRF, encoded as bytes.
+            s_bytes (bytes): The server's OPRF private key, encoded as bytes.
 
         Returns:
-            bytes: The result of the OPRF operation.
+            bytes: The result of the OPRF operation (R) encoded as bytes.
         """
 
-        s = int.from_bytes(s_bytes, byteorder="big")
-        C = int.from_bytes(C_bytes, byteorder="big")
+        s_key = load_pem_private_key(s_bytes, password=None, backend=default_backend())
 
-        # Perform OPRF operation: R = C^s mod p or R = C^s the project brief is not even clear ⚠️
-        p = dontknow
-        R = pow(C, s, p)  # ?? what is p need to be the same as the client ??
+        # Convert C_bytes into an EC point
+        C_point = ec.EllipticCurvePublicNumbers.from_encoded_point(
+            ec.SECP256R1(), C_bytes
+        ).public_key(default_backend())
 
-        R_bytes = R.to_bytes(R, "big")
+        R_point = s_key.exchange(ec.ECDH(), C_point)
+
+        derived_key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b"oprf result",
+            backend=default_backend(),
+        ).derive(R_point)
+
+        R_bytes = derived_key
 
         return R_bytes
 
