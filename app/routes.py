@@ -1,20 +1,12 @@
 from flask import Blueprint, flash, jsonify, redirect, render_template, request
-import logging
 
 from .AuthManager import AuthManager
 from .database import db
 from .models import Users
-import base64
-
-# added logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 site = Blueprint("simple_page", __name__, template_folder="templates")
 auth_manager = AuthManager(db)
 
-global p, q
-p = 0
-q = 0
 
 @site.route("/")
 def index():
@@ -23,9 +15,7 @@ def index():
 
 @site.route("/signup", methods=["POST", "GET"])
 def signup():
-
-    #adding a database clearing for test purposes 
-    #otherwise it was redirecting to the same page non stop
+    # adding a database clearing for test purposes
     db.session.query(Users).delete()
     db.session.commit()
 
@@ -72,13 +62,13 @@ def signup():
 
             return jsonify({"message": "Signup successful"})
         else:
-            logging.warning("Received non-POST request on /signup")
             flash("Invalid request")
             return redirect("/signup")
     except Exception as e:
-        logging.error(f"An error occurred: {e}", exc_info=True)
+        print(e)
         flash("An error occurred during signup")
         return redirect("/signup")
+
 
 @site.route("/login", methods=["POST"])
 def login():

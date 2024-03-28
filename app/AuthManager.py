@@ -1,13 +1,21 @@
 from typing import Optional
 
+from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, ec
+from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from sqlalchemy.orm import Session
 
 
 class AuthManager:
+    # Parameters for the 2048-bit group from RFC 3526
+    p = int(
+        "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF",
+        16,
+    )  # The hexadecimal value of p for the 2048-bit group, to be replaced by the exact value
+    g = 2
+
     # generate key pair for the server (Diffie-Hellman)
     dh_parameters = dh.generate_parameters(
         generator=2, key_size=2048, backend=default_backend()
@@ -25,40 +33,27 @@ class AuthManager:
         self.db = db
         self.shared_key: Optional[bytes] = None
 
-    def generate_user_key(self) -> bytes:
+    def generate_user_key(self) -> int:
         """
-        Generate a user-specific private key for the OPRF (Oblivious Pseudo-Random Function) and return it as bytes.
-
-        ?? the key is a salt (how do the salt) or an ellipticcurve ??
+        Generate a user-specific private key (salt) for the OPRF (Oblivious Pseudo-Random Function) and return it as int.
 
         Returns:
-            bytes: The private key serialized as bytes.
+            int: The private key serialized as int.
         """
 
-        private_key = ec.generate_private_key(ec.SECP256R1(), default_backend())
-
-        private_key_bytes = private_key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption(),
-        )
-
-        return private_key_bytes
-
-    def perform_oprf(self, C: int, user_salt: int, q: int) -> int:
+    def perform_oprf(self, C: int, user_salt: int) -> int:
         """
         Perform the OPRF operation for a given user and input C.
 
         Args:
             C (int): The client's C, as an integer derived from their password.
             user_salt (int): The server's salt for this specific user, acting as the secret s.
-            q (int): The order of the group G.
 
         Returns:
             int: The resulting R from the OPRF operation.
         """
 
-        R = pow(C, user_salt, 2 * q + 1)
+        R = pow(C, user_salt, AuthManager.p)
 
         return R
 
