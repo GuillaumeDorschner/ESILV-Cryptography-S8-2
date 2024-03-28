@@ -9,15 +9,15 @@ in
     {
         "request_step": 1, // int
         "username": "jules", // string
-        "oprf_begin": "oprfBeginData" // bytes
+        "oprf_begin": "oprfBeginData" // int
     }
     ```
 out
 - **Step 1 Response**
     ```json
     {
-        "oprf": "oprfResult", // bytes
-        "server_public_key": "key" // bytes
+        "oprf": "oprfResult", // int
+        "server_public_key": "key" // bytes (serialize)
     }
     ```
 
@@ -27,8 +27,8 @@ in
     {
         "request_step": 2, // int
         "username": "jules", // string
-        "encrypted_envelope": "encryptedEnvelopeData", // bytes
-        "client_public_key": "userPublicKey" // bytes
+        "encrypted_envelope": "encryptedEnvelopeData", // bytes (serialize)
+        "client_public_key": "userPublicKey" // bytes (serialize)
     }
     ```
 out
@@ -45,7 +45,7 @@ in
     ```json
     {
         "username": "jules", // string
-        "oprf_begin": "oprfBeginData" // bytes
+        "oprf_begin": "oprfBeginData" // bytes (serialize)
     }
     ```
 
@@ -53,8 +53,8 @@ out
 - **POST Response**:
     ```json
     {
-        "oprf": "oprfResult", // bytes
-        "encrypted_envelope": "encryptedEnvelopeData" // bytes
+        "oprf": "oprfResult", // bytes (serialize)
+        "encrypted_envelope": "encryptedEnvelopeData" // bytes (serialize)
     }
     ```
 
@@ -64,7 +64,7 @@ in
     ```json
     {
         "username": "jules", // string
-        "client_public_key": "userPublicKey" // bytes
+        "client_public_key": "userPublicKey" // bytes (serialize)
     }
     ```
 

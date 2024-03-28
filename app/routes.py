@@ -1,3 +1,6 @@
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from flask import Blueprint, flash, jsonify, redirect, render_template, request
 
 from .AuthManager import AuthManager
@@ -46,9 +49,9 @@ def signup():
 
             oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
 
-            return jsonify(
-                {"oprf": oprf, "server_public_key": auth_manager.server_public_key}
-            )
+            serialize_public_key = serialize_key(auth_manager.server_public_key)
+
+            return jsonify({"oprf": oprf, "server_public_key": serialize_public_key})
         elif request_step == 2:
             # Placeholder: Implement the logic save the encrypted envelope
             encrypted_envelope = data.get("encrypted_envelope")
@@ -143,3 +146,22 @@ def AKE():
 #         print(e)
 #         flash("An error occurred during signup")
 #         return redirect("/login")
+
+
+def serialize_key(public_key):
+    # Convert the public key to PEM format
+    pem_public_key = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    # Decode to string for JSON serialization
+    pem_public_key_str = pem_public_key.decode("utf-8")
+    return pem_public_key_str
+
+
+def deserialize_key(pem_public_key_str):
+    # Convert the string back to bytes
+    pem_public_key_bytes = pem_public_key_str.encode("utf-8")
+    # Load the public key from PEM format
+    public_key = load_pem_public_key(pem_public_key_bytes, backend=default_backend())
+    return public_key
