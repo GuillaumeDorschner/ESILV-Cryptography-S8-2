@@ -4,7 +4,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dh, ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from sqlalchemy.orm import Session
 
 
@@ -46,38 +45,22 @@ class AuthManager:
 
         return private_key_bytes
 
-    def perform_oprf(self, C_bytes: bytes, s_bytes: bytes) -> bytes:
+    def perform_oprf(self, C: int, user_salt: int, q: int) -> int:
         """
-        Perform an OPRF operation using a private key and an input C, both provided as bytes.
+        Perform the OPRF operation for a given user and input C.
 
         Args:
-            C_bytes (bytes): The input C for the OPRF, encoded as bytes.
-            s_bytes (bytes): The server's OPRF private key, encoded as bytes.
+            C (int): The client's C, as an integer derived from their password.
+            user_salt (int): The server's salt for this specific user, acting as the secret s.
+            q (int): The order of the group G.
 
         Returns:
-            bytes: The result of the OPRF operation (R) encoded as bytes.
+            int: The resulting R from the OPRF operation.
         """
 
-        s_key = load_pem_private_key(s_bytes, password=None, backend=default_backend())
+        R = pow(C, user_salt, 2 * q + 1)
 
-        # Convert C_bytes into an EC point
-        C_point = ec.EllipticCurvePublicNumbers.from_encoded_point(
-            ec.SECP256R1(), C_bytes
-        ).public_key(default_backend())
-
-        R_point = s_key.exchange(ec.ECDH(), C_point)
-
-        derived_key = HKDF(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=None,
-            info=b"oprf result",
-            backend=default_backend(),
-        ).derive(R_point)
-
-        R_bytes = derived_key
-
-        return R_bytes
+        return R
 
     # --------------- Diffie Hellman ---------------
 
