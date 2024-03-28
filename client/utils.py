@@ -36,7 +36,6 @@ def H(password):
 # Récupère G (cf Concrete Implemention p.12) : le groupe cyclique de premiers d'ordre q
 # En utilisant l'algo DC 3526
 
-
 def SignUp_step1():
     global username
     C = 0
@@ -53,16 +52,12 @@ def SignUp_step1():
     Hp = H(password) 
     r = int.from_bytes(os.urandom(256), byteorder='big') % (q) + 1
     C = pow(Hp, r, p)
-    C = str(C)
-    C = C.encode()
-    print(C) # to bytes 
-    C_base64 = base64.b64encode(C).decode('utf-8')
     print(type(C))
 
     data = {
     'request_step': 1,  # Assuming we're doing the first step of the signup process
     'username': username,  # The desired username
-    'oprf_begin': C_base64,  
+    'oprf_begin': C,  
     "p_value" : p, #p est un int
     "q_value" : q  #q est un int
     }

@@ -24,9 +24,7 @@ def index():
 @site.route("/signup", methods=["POST", "GET"])
 def signup():
 
-
-
-#adding a database clearing for test purposes 
+    #adding a database clearing for test purposes 
     #otherwise it was redirecting to the same page non stop
     db.session.query(Users).delete()
     db.session.commit()
