@@ -1,3 +1,4 @@
+import secrets
 from typing import Optional
 
 from cryptography.fernet import Fernet
@@ -40,6 +41,12 @@ class AuthManager:
         Returns:
             int: The private key serialized as int.
         """
+
+        salt_size_bits = 128
+
+        salt = secrets.randbits(salt_size_bits)
+
+        return salt
 
     def perform_oprf(self, C: int, user_salt: int) -> int:
         """
