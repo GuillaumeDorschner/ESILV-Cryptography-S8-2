@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 global r, p, q, C_priv_key, C_pub_key
 
@@ -276,3 +277,25 @@ def encrypt_data(shared_key: bytes, data: str) -> bytes:
     encrypted_data = f.decrypt(data)
 
     return encrypted_data
+
+
+# ------------ utile pour la suite ------------
+
+
+def serialize_key(public_key):
+    # Convert the public key to PEM format
+    pem_public_key = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    # Decode to string for JSON serialization
+    pem_public_key_str = pem_public_key.decode("utf-8")
+    return pem_public_key_str
+
+
+def deserialize_key(pem_public_key_str):
+    # Convert the string back to bytes
+    pem_public_key_bytes = pem_public_key_str.encode("utf-8")
+    # Load the public key from PEM format
+    public_key = load_pem_public_key(pem_public_key_bytes, backend=default_backend())
+    return public_key
