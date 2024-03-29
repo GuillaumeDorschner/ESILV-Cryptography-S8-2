@@ -37,6 +37,8 @@ The second part of your project involves Password-Authenticated Key Exchange (PA
 >     python -m client.main
 >     ```
 
+[Here](./documentation.md) the documentation of the EndPoint API.
+
 # What we will be using
 
 All the code is written in Python, and we will be using the following libraries:
@@ -51,7 +53,6 @@ graph LR
     Server[Backend] --> Postgres[PostgreSQL database]
     Server --> cryptography[cryptography.io]
 ```
-
 
 # Diagrams and Explanations
 

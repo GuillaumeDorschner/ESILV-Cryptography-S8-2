@@ -3,7 +3,6 @@ import json
 import os
 
 import requests
-from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import dh
@@ -62,7 +61,7 @@ def SignUp():
 
         data = {
             "request_step": 1,  # Assuming we're doing the first step of the signup process
-            "username": username,  # The desired username
+            "username": username,
             "oprf_begin": C,
         }
 
@@ -103,14 +102,13 @@ def SignUp():
         C_pub_key_bytes = serialize_key(public_key=C_pub_key)
 
         data = {
-            "request_step": 2,  # int
-            "username": str(username),  # str
+            "request_step": 2,
+            "username": str(username),
             "encrypted_envelope": encrypted_envelope,
-            "client_public_key": C_pub_key_bytes,  # bytes
+            "client_public_key": C_pub_key_bytes,
         }
 
         data_json = json.dumps(data)
-        # Set the headers to indicate JSON content
         headers = {"Content-Type": "application/json"}
 
         response = requests.post(url, data=data_json, headers=headers)
@@ -140,7 +138,7 @@ def Login():
     C = pow(Hp, r, p)
 
     data = {
-        "username": username,  # The desired username
+        "username": username,
         "oprf_begin": C,
     }
 
@@ -190,10 +188,8 @@ def Login():
     print("INFO : envelope successfully decrypted :\n\n")
     print(decrypted_envelope)
 
-    # Convert the byte string to a string to perform string operations
     decrypted_envelope_str = decrypted_envelope.decode("utf-8")
 
-    # Split the string into the private key and public key strings
     keys = decrypted_envelope_str.split("DELIMITATION")
     private_key_str = keys[0]
     public_key_str = keys[1]
@@ -243,7 +239,6 @@ def Login():
     return shared_key
 
 
-# soit R la réponse du serveur
 def computeOPRF(R, S_pub_key_bytes):
     global nonce
     # calculer la rwd à partir de la réponse du serveur
@@ -287,52 +282,6 @@ def AKE(C_priv_key, S_pub_key) -> bytes:
     ).derive(shared_key)
 
     return derived_key
-
-
-# --------------- In the futur ---------------
-
-
-def encrypt_data(shared_key: bytes, data: str) -> bytes:
-    if shared_key is None:
-        raise Exception("Shared key not set")
-
-    f = Fernet(shared_key)
-
-    encrypted_data = f.decrypt(data)
-
-    return encrypted_data
-
-    # Extract the nonce and ciphertext from M
-    nonce = M[:12]  # Assuming the nonce is the first 12 bytes of M
-    ciphertext = M[12:]  # The rest is the ciphertext
-
-    # Initialize AES-GCM with the same key used for encryption
-    aesgcm = AESGCM(rwd)
-
-    # Decrypt the ciphertext using AES-GCM
-    try:
-        decrypted_data = aesgcm.decrypt(
-            nonce, ciphertext, None
-        )  # Associated data is set to None
-        return decrypted_data
-    except Exception as e:
-        # Handle decryption failure (e.g., due to tampering or incorrect key)
-        print(f"Decryption failed: {e}")
-        return None
-
-
-# --------------- In the futur ---------------
-
-
-def encrypt_data(shared_key: bytes, data: str) -> bytes:
-    if shared_key is None:
-        raise Exception("Shared key not set")
-
-    f = Fernet(shared_key)
-
-    encrypted_data = f.decrypt(data)
-
-    return encrypted_data
 
 
 # ------------ utile pour la suite ------------

@@ -64,7 +64,6 @@ in
     ```json
     {
         "username": "jules", // string
-        "client_public_key": "userPublicKey" // bytes (serialize)
     }
     ```
 
