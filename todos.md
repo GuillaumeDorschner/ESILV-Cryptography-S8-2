@@ -3,20 +3,20 @@
 ## Client
 
 ### Initial Communication
-- [ ] Get password, username from client
+- [x] Get password, username from client
 
 **OPRF - 1st Step**
-- [ ] Compute: `F(pwd, ?)`
-- [ ] Send: `F(pwd, ?)`
+- [x] Compute: `F(pwd, ?)`
+- [x] Send: `F(pwd, ?)`
 
 ---
 
 ### Processing OPRF Output
-- [ ] Receive: OPRF output
-- [ ] Generate the client's asymmetric key pair
-- [ ] Compute random key (rwd) from OPRF output
-- [ ] Encrypt CLIENT private Key & SERVER public key with rwd -> encrypted envelope
-- [ ] Send: encrypted envelope + unencrypted public key
+- [x] Receive: OPRF output
+- [x] Generate the client's asymmetric key pair
+- [x] Compute random key (rwd) from OPRF output
+- [x] Encrypt CLIENT private Key & SERVER public key with rwd -> encrypted envelope
+- [x] Send: encrypted envelope + unencrypted public key
 
 ---
 
@@ -34,17 +34,17 @@
 ## Server
 
 ### Receiving Initial Request
-- [ ] Receive: `F(pwd, ?)`
-- [ ] Generate a user-specific OPRF key for the user
+- [x] Receive: `F(pwd, ?)`
+- [x] Generate a user-specific OPRF key for the user
 - **OPRF - 2nd Step**
-- [ ] Compute: `F(pwd, key)`
-- [ ] Generate server's asymmetric key pair
-- [ ] Send: `F(pwd, key)` && server's public key
+- [x] Compute: `F(pwd, key)`
+- [x] Generate server's asymmetric key pair
+- [x] Send: `F(pwd, key)` && server's public key
 
 ---
 
 ### Handling Encrypted Envelope
-- [ ] Receive: encrypted envelope + unencrypted public key
+- [x] Receive: encrypted envelope + unencrypted public key
 - [ ] Store: envelope, user's public key, OPRF user-specific key, indexed by username
 
 ---

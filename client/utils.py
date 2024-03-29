@@ -145,6 +145,7 @@ def computeOPRF(R,S_pub_key_bytes):
 
     concatenated_keys = C_private_key_bytes + S_pub_key_bytes
     nonce, encrypted_envelope = encrypt_personal_envelope(rwd, concatenated_keys)
+    print ("INFO : envelope encrypted :\n", encrypted_envelope)
     return encrypted_envelope
     #return M
 # login
@@ -347,3 +348,16 @@ def serialize_private_key(private_key, passphrase=None):
     # Decode to string if necessary
     pem_private_key_str = pem_private_key.decode('utf-8')
     return pem_private_key_str
+
+
+def decrypt_personal_envelope(encryption_key, nonce, encrypted_message):
+    """
+    Decrypts the encrypted message using AES-GCM with the given encryption key and nonce.
+    """
+    aesgcm = AESGCM(encryption_key)
+    try:
+        decrypted_message = aesgcm.decrypt(nonce, encrypted_message, None)
+        return decrypted_message
+    except Exception as e:
+        print(f"Decryption failed: {str(e)}")
+        return None

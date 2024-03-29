@@ -6,6 +6,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request
 from .AuthManager import AuthManager
 from .database import db
 from .models import Users
+import ast
 
 site = Blueprint("simple_page", __name__, template_folder="templates")
 auth_manager = AuthManager(db)
@@ -18,10 +19,7 @@ def index():
 
 @site.route("/signup", methods=["POST", "GET"])
 def signup():
-    if request.method == "POST" :
-        # adding a database clearing for test purposes
-        db.session.query(Users).delete()
-        db.session.commit()
+
 
     try:
         data = request.json
@@ -31,6 +29,10 @@ def signup():
         request_step = data.get("request_step")
         username = data.get("username")
         if request_step == 1:
+            # adding a database clearing for test purposes
+            db.session.query(Users).delete()
+            db.session.commit()
+
             # Placeholder: Implement the logic for oprf
             if Users.query.filter_by(username=username).first() is not None:
                 flash("User already exists")
@@ -57,12 +59,13 @@ def signup():
         elif request_step == 2:
             # Placeholder: Implement the logic save the encrypted envelope
             encrypted_envelope = data.get("encrypted_envelope")
+            encrypted_envelope = ast.literal_eval(encrypted_envelope)
             client_public_key = data.get("client_public_key")
-
+            client_public_key = client_public_key.encode("utf-8")
             user = Users.query.filter_by(username=username).first()
             user.encrypted_envelope = encrypted_envelope
             user.client_public_key = client_public_key
-
+            
             db.session.commit()
 
             return jsonify({"message": "Signup successful"})
