@@ -209,32 +209,51 @@ def Login():
 
     # Convert the keys back to byte strings
     C_priv_key_bytes = private_key_str.encode('utf-8')
-    S_pub_key_bytes = public_key_str.encode('utf-8')
-    '''
-    # Load the private key from PEM format
-    C_private_key = serialization.load_pem_private_key(
-        private_key_bytes,
-        password=None,  # If your key is encrypted, provide the password here
-        backend=default_backend()
-    )
-
-    # Load the public key from PEM format
-    S_pub_key = serialization.load_pem_public_key(
-        public_key_bytes,
-        backend=default_backend()
-    )
-
+    
+    S_pub_key = deserialize_key(public_key_str)
+    #C_priv_key = deserialize_private_key(C_priv_key)
     # Variable names as requested are already assigned:
     # C_private_key will contain the private key object.
     # S_pub_key will contain the public key object.
 
     # Below is a demonstration that the keys have been loaded by printing their types
-    print("Private Key type:", type(C_private_key))
+    print("Private Key type:", type(C_priv_key))
     print("Public Key type:", type(S_pub_key))
-    '''
+
     
-    shared_key = AKE(C_priv_key_bytes,S_pub_key_bytes)
+    shared_key = AKE(C_priv_key,S_pub_key)
     print (shared_key)
+
+    print ("INFO : initiating AKE")
+
+    server_url = "http://localhost:8080"
+    signup_route = "/AKE"
+    url = server_url + signup_route
+    
+
+    data = { 
+        "username": username,  # The desired username
+    }
+
+
+
+    data_json = json.dumps(data)
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.post(url, data=data_json, headers=headers)
+    if response.ok:
+        data = response.json()
+
+        print("INFO : AKE successfuly initiated")
+
+    else:
+        print("AKE request failed.")
+        print("Status Code:", response.status_code)
+        print("Response:", response.text)
+
+        Exception("AKE request failed.")
+
+    return (shared_key)
 
 
 
@@ -263,7 +282,7 @@ def computeOPRF(R,S_pub_key_bytes):
 # --------------- Diffie Hellman ---------------
 
 
-def AKE(client_private_key_pem: bytes, server_public_key_pem: bytes) -> bytes:
+def AKE(C_priv_key, S_pub_key) -> bytes:
     """
     Perform the Authenticated Key ENonetes): The PEM-encoded client's private key.
         server_public_key_pem (bytes): The PEM-encoded server's public key.
@@ -271,15 +290,11 @@ def AKE(client_private_key_pem: bytes, server_public_key_pem: bytes) -> bytes:
     Returns:
         bytes: The derived shared key.
     """
-    client_private_key = serialization.load_pem_public_key(
-        client_private_key_pem, backend=default_backend()
-    )
+    
+    print("\n\nALERT :", 'C_priv_key :', C_priv_key)
+    print("\n\nALERT :", 'S_pub_key :', S_pub_key)
 
-    server_public_key = serialization.load_pem_public_key(
-        server_public_key_pem, backend=default_backend()
-    )
-
-    shared_key = client_private_key.exchange(server_public_key)
+    shared_key = C_priv_key.exchange(S_pub_key)
 
     derived_key = HKDF(
         algorithm=hashes.SHA256(),
@@ -324,36 +339,6 @@ def encrypt_data(shared_key: bytes, data: str) -> bytes:
         return None
 
 
-# --------------- Diffie Hellman ---------------
-
-
-def AKE(client_private_key_pem: bytes, server_public_key_pem: bytes) -> bytes:
-    """
-    Perform the Authenticated Key ENonetes): The PEM-encoded client's private key.
-        server_public_key_pem (bytes): The PEM-encoded server's public key.
-
-    Returns:
-        bytes: The derived shared key.
-    """
-    client_private_key = serialization.load_pem_public_key(
-        client_private_key_pem, backend=default_backend()
-    )
-
-    server_public_key = serialization.load_pem_public_key(
-        server_public_key_pem, backend=default_backend()
-    )
-
-    shared_key = client_private_key.exchange(server_public_key)
-
-    derived_key = HKDF(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=None,
-        info=b"handshake data",
-        backend=default_backend(),
-    ).derive(shared_key)
-
-    return derived_key
 
 
 # --------------- In the futur ---------------
@@ -445,3 +430,34 @@ def decrypt_personal_envelope(encryption_key, nonce, encrypted_message):
     except Exception as e:
         print(f"Decryption failed: {str(e)}")
         return None
+    
+
+def deserialize_private_key(pem_private_key_bytes, password=None):
+    """
+    Deserialize a PEM-encoded private key into a private key object.
+
+    Args:
+        pem_private_key_bytes (bytes): The PEM-encoded private key as a byte string.
+        password (bytes, optional): The password to decrypt the key, if it is encrypted. 
+                                    Should be `None` if the key is not encrypted.
+    
+    Returns:
+        Private key object: The deserialized private key.
+    """
+    try:
+        # Attempt to load the private key
+        private_key = serialization.load_pem_private_key(
+            pem_private_key_bytes,
+            password=password,
+            backend=default_backend()
+        )
+        return private_key
+    except ValueError as e:
+        # Handle the case where the password is incorrect or the key encoding is invalid
+        print("Error deserializing the private key:", str(e))
+    except Exception as e:
+        # Handle other potential exceptions
+        print("An unexpected error occurred while deserializing the private key:", str(e))
+    
+    return None  # Returning None to indicate failure
+

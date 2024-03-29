@@ -2,4 +2,5 @@ from utils import SignUp, Login
 
 SignUp() 
 print ("entering login phase :")
-Login()
+shared_key = Login()
+

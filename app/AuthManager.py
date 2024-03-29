@@ -18,10 +18,8 @@ class AuthManager:
     g = 2
 
     # generate key pair for the server (Diffie-Hellman)
-    dh_parameters = dh.generate_parameters(
-        generator=2, key_size=2048, backend=default_backend()
-    )
-    server_private_key = dh_parameters.generate_private_key()
+    parameters = dh.DHParameterNumbers(p, g).parameters(default_backend())
+    server_private_key = parameters.generate_private_key()
     server_public_key = server_private_key.public_key()
 
     def __init__(self, db: Session):
