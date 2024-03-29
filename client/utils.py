@@ -199,6 +199,40 @@ def Login():
     print(decrypted_envelope)
 
 
+    # Convert the byte string to a string to perform string operations
+    decrypted_envelope_str = decrypted_envelope.decode('utf-8')
+
+    # Split the string into the private key and public key strings
+    keys = decrypted_envelope_str.split('DELIMITATION')
+    private_key_str = keys[0]
+    public_key_str = keys[1]
+
+    # Convert the keys back to byte strings
+    private_key_bytes = private_key_str.encode('utf-8')
+    public_key_bytes = public_key_str.encode('utf-8')
+
+    # Load the private key from PEM format
+    C_private_key = serialization.load_pem_private_key(
+        private_key_bytes,
+        password=None,  # If your key is encrypted, provide the password here
+        backend=default_backend()
+    )
+
+    # Load the public key from PEM format
+    S_pub_key = serialization.load_pem_public_key(
+        public_key_bytes,
+        backend=default_backend()
+    )
+
+    # Variable names as requested are already assigned:
+    # C_private_key will contain the private key object.
+    # S_pub_key will contain the public key object.
+
+    # Below is a demonstration that the keys have been loaded by printing their types
+    print("Private Key type:", type(C_private_key))
+    print("Public Key type:", type(S_pub_key))
+
+
 # soit R la réponse du serveur
 def computeOPRF(R,S_pub_key_bytes):
     global nonce 
@@ -211,7 +245,7 @@ def computeOPRF(R,S_pub_key_bytes):
 
     C_private_key_bytes = serialize_private_key(C_priv_key)
 
-    concatenated_keys = C_private_key_bytes + S_pub_key_bytes
+    concatenated_keys = C_private_key_bytes + "DELIMITATION" + S_pub_key_bytes
     nonce, encrypted_envelope = encrypt_personal_envelope(rwd, concatenated_keys)
     print ("INFO : envelope encrypted :\n", encrypted_envelope)
     return encrypted_envelope
