@@ -208,9 +208,9 @@ def Login():
     public_key_str = keys[1]
 
     # Convert the keys back to byte strings
-    private_key_bytes = private_key_str.encode('utf-8')
-    public_key_bytes = public_key_str.encode('utf-8')
-
+    C_priv_key_bytes = private_key_str.encode('utf-8')
+    S_pub_key_bytes = public_key_str.encode('utf-8')
+    '''
     # Load the private key from PEM format
     C_private_key = serialization.load_pem_private_key(
         private_key_bytes,
@@ -231,6 +231,11 @@ def Login():
     # Below is a demonstration that the keys have been loaded by printing their types
     print("Private Key type:", type(C_private_key))
     print("Public Key type:", type(S_pub_key))
+    '''
+    
+    shared_key = AKE(C_priv_key_bytes,S_pub_key_bytes)
+    print (shared_key)
+
 
 
 # soit R la réponse du serveur
