@@ -207,10 +207,11 @@ def Login():
     print("Private Key type:", type(C_priv_key))
     print("Public Key type:", type(S_pub_key))
 
-    shared_key = AKE(C_priv_key, S_pub_key)
-    print(shared_key)
+    
+    shared_key = create_shared_key(C_priv_key,S_pub_key)
+    print (shared_key)
 
-    print("INFO : initiating AKE")
+    print ("INFO : initiating AKE")
 
     server_url = "http://localhost:8080"
     signup_route = "/AKE"
@@ -235,9 +236,9 @@ def Login():
         print("Response:", response.text)
 
         Exception("AKE request failed.")
-
-    return shared_key
-
+    print("We wished we had more time to implement hashing and signing the shared key.")
+    #
+    
 
 def computeOPRF(R, S_pub_key_bytes):
     global nonce
@@ -259,7 +260,7 @@ def computeOPRF(R, S_pub_key_bytes):
 # --------------- Diffie Hellman ---------------
 
 
-def AKE(C_priv_key, S_pub_key) -> bytes:
+def create_shared_key(C_priv_key, S_pub_key) -> bytes:
     """
     Perform the Authenticated Key ENonetes): The PEM-encoded client's private key.
         server_public_key_pem (bytes): The PEM-encoded server's public key.
