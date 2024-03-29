@@ -18,7 +18,7 @@ def index():
 
 @site.route("/signup", methods=["POST", "GET"])
 def signup():
-    if request.method == "POST" :
+    if request.method == "POST":
         # adding a database clearing for test purposes
         db.session.query(Users).delete()
         db.session.commit()
@@ -53,7 +53,7 @@ def signup():
             serialize_public_key = serialize_key(auth_manager.server_public_key)
 
             return jsonify({"oprf": oprf, "server_public_key": serialize_public_key})
-        
+
         elif request_step == 2:
             # Placeholder: Implement the logic save the encrypted envelope
             encrypted_envelope = data.get("encrypted_envelope")
@@ -108,11 +108,11 @@ def AKE():
         data = request.json
         if data is None:
             flash("Invalid request")
-            return redirect("/login")
 
-        # username = data.get("username")
-        client_public_key = data.get("client_public_key")
-        shared_key = auth_manager.AKE(client_public_key)
+        serialize_client_public_key = data.get("client_public_key")
+
+        shared_key = auth_manager.AKE(serialize_client_public_key)
+
         print(
             "The following shared_key should be the same on the server and the client: ",
             shared_key,
