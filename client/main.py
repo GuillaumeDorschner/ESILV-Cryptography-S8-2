@@ -1,3 +1,3 @@
-from utils import SignUp_step1
+from utils import SignUp
 
-SignUp_step1()
+SignUp()
