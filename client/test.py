@@ -1,32 +1,13 @@
-import os
-
-from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, rsa
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-import requests
-import base64
+from cryptography.hazmat.primitives.asymmetric import dh
 
+# Paramètres pour le groupe 2048-bit de RFC 3526
+p = int('E' * 256, 16)  # La valeur hexadécimale de p pour le groupe 2048-bit, à remplacer par la valeur exacte
+g = 2
 
+# Créer des paramètres DH avec p et g
+parameters = dh.DHParameterNumbers(p, g).parameters(default_backend())
+print(parameters)
+# Génération d'une clé privée pour l'échange
+private_key = parameters.generate_private_key()
 
-C_priv_key = rsa.generate_private_key(
-public_exponent=65537,
-key_size=2048
-)
-C_pub_key = C_priv_key.public_key()
-
-# Envellope (M)
-# avec M =  Encrypt(K=rwd, C_priv_key || S_pub_key)
-
-
-# Serialization des clées pour obtenir les représentation en bytes
-C_priv_key_bytes = C_priv_key.private_bytes(
-    encoding=serialization.Encoding.PEM,
-    format=serialization.PrivateFormat.PKCS8,
-    encryption_algorithm=serialization.NoEncryption()  
-)
-
-print(C_priv_key_bytes)
-print(type(C_priv_key_bytes))
