@@ -107,7 +107,6 @@ Example of Sequence Diagram.
         S->>-U: AKE : Inputs server's private key + client public key
         U->>U: receives fresh shared key from AKE
         S->>S: receives fresh shared key from AKE
-        U->>U: Initiate Login
         U->>U: Hashes shared key (K) using SHA256
         U->>U: Signs the hash with client private key
         U->>S: Sends the signed hash to server
