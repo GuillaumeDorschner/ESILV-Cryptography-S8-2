@@ -1,3 +1,5 @@
-from utils import SignUp
+from utils import SignUp, Login
 
-SignUp()
+SignUp() 
+print ("entering login phase :")
+Login()

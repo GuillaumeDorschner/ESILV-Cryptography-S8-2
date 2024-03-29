@@ -78,7 +78,7 @@ def signup():
         return redirect("/signup")
 
 
-@site.route("/login", methods=["POST"])
+@site.route("/login", methods=["POST", "GET"])
 def login():
     try:
         data = request.json
@@ -95,9 +95,9 @@ def login():
             flash("User not found")
             return redirect("/login")
 
-        oprf = auth_manager.perform_oprf(oprf_begin, user["oprf_key"])
+        oprf = auth_manager.perform_oprf(int (oprf_begin), int(user.oprf_key))
 
-        return jsonify({"oprf": oprf, "encrypted_envelope": user["encrypted_envelope"]})
+        return jsonify({"oprf": oprf, "encrypted_envelope": str(user.encrypted_envelope)})
     except Exception as e:
         print(e)
         flash("An error occurred during login")

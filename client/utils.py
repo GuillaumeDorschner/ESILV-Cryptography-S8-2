@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
-
+import ast
 global r, p, q, C_priv_key, C_pub_key, current, nonce
 
 # Parameters for the 2048-bit group from RFC 3526
@@ -125,10 +125,78 @@ def SignUp():
         if response.ok:
             print("Signup request, step 2, was successful.")
             print("Response:", response.json())
+            return 1
         else:
             print("Signup request failed.")
             print("Status Code:", response.status_code)
             print("Response:", response.text)
+
+def Login():
+    global r, p, q, C_priv_key, C_pub_key, current
+    C = 0
+
+    # print("\n Thank you for signing up, please enter your credentials below : \n")
+    # username = input("username : ")
+    # password = input("password : ")
+
+    username = "jules"
+    password = "password"
+
+    server_url = "http://localhost:8080"
+    signup_route = "/login"
+    url = server_url + signup_route
+
+    Hp = H(password)
+    C = pow(Hp, r, p)
+
+    data = { 
+        "username": username,  # The desired username
+        "oprf_begin": C,
+    }
+
+    print(f'\n you are signing up as "{username}" with password : "{password}"')
+    print("\n initiating first step of OPRF :")
+    print(f'\n posting : {str(data)}, \nto "{url}" : \n')
+
+
+    data_json = json.dumps(data)
+    headers = {"Content-Type": "application/json"}
+
+    response = requests.post(url, data=data_json, headers=headers)
+    if response.ok:
+        data = response.json()
+
+        print("Signup request, step 1, was successful.")
+        print("Response:", data)
+
+        OPRFoutput = data["oprf"]
+        encrypted_envelope = data["encrypted_envelope"]
+
+        print ("INFO : received OPRF output :\n",type(OPRFoutput), OPRFoutput )
+        print ("INFO : received encrypted envelope :\n",type(encrypted_envelope), encrypted_envelope )
+        print("Engaging Step 2")
+    else:
+        print("Signup request failed.")
+        print("Status Code:", response.status_code)
+        print("Response:", response.text)
+
+        Exception("Signup request failed.")
+
+
+    print("INFO : deriving rwd form OPRF output : ")
+    z = pow(int (r), -1, p)
+    rwd = pow(int(OPRFoutput), int(z),int(p))
+    rwd = derive_encryption_key(rwd)
+    print("INFO : rwd successfully derived from OPRF")
+    print("...........................")
+    print("INFO : decrypting envelope")  
+    encrypted_envelope = ast.literal_eval(encrypted_envelope)
+    try :
+        decrypted_envelope = decrypt_personal_envelope(rwd, nonce, encrypted_envelope) 
+    except Exception as e :
+        print(e)
+    print ("INFO : envelope successfully decrypted :\n\n")
+    print(decrypted_envelope)
 
 
 # soit R la réponse du serveur
@@ -151,29 +219,6 @@ def computeOPRF(R,S_pub_key_bytes):
 # login
 
 
-# decrypt envelop
-def decrypt_envelop(rwd, M):
-    # Validate key size for AES-GCM
-    if len(rwd) not in [16, 24, 32]:
-        raise ValueError("Invalid key size for AES-GCM.")
-
-    # Extract the nonce and ciphertext from M
-    nonce = M[:12]  # Assuming the nonce is the first 12 bytes of M
-    ciphertext = M[12:]  # The rest is the ciphertext
-
-    # Initialize AES-GCM with the same key used for encryption
-    aesgcm = AESGCM(rwd)
-
-    # Decrypt the ciphertext using AES-GCM
-    try:
-        decrypted_data = aesgcm.decrypt(
-            nonce, ciphertext, None
-        )  # Associated data is set to None
-        return decrypted_data
-    except Exception as e:
-        # Handle decryption failure (e.g., due to tampering or incorrect key)
-        print(f"Decryption failed: {e}")
-        return None
 
 
 # --------------- Diffie Hellman ---------------
