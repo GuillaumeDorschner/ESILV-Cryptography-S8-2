@@ -18,9 +18,10 @@ def index():
 
 @site.route("/signup", methods=["POST", "GET"])
 def signup():
-    # adding a database clearing for test purposes
-    db.session.query(Users).delete()
-    db.session.commit()
+    if request.method == "POST" :
+        # adding a database clearing for test purposes
+        db.session.query(Users).delete()
+        db.session.commit()
 
     try:
         data = request.json
@@ -52,6 +53,7 @@ def signup():
             serialize_public_key = serialize_key(auth_manager.server_public_key)
 
             return jsonify({"oprf": oprf, "server_public_key": serialize_public_key})
+        
         elif request_step == 2:
             # Placeholder: Implement the logic save the encrypted envelope
             encrypted_envelope = data.get("encrypted_envelope")

@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
-global r, p, q, C_priv_key, C_pub_key
+global r, p, q, C_priv_key, C_pub_key, current, nonce
 
 # Parameters for the 2048-bit group from RFC 3526
 p = int(
@@ -20,8 +20,12 @@ p = int(
 g = 2
 parameters = dh.DHParameterNumbers(p, g).parameters(default_backend())
 q = (p - 1) // 2
-
-
+r = int.from_bytes(os.urandom(256), byteorder="big") % (q) + 1
+#generate the clinet's key pair.
+C_priv_key = parameters.generate_private_key()
+C_pub_key = C_priv_key.public_key()
+nonce = 0
+current = 1
 # calcule H(p), le hash du password selon la méthode définie dans l'énoncé
 def H(password):
     # pas sur de la nécessité de hasher, on peut juste str => int je pense
@@ -40,8 +44,8 @@ def H(password):
 # En utilisant l'algo DC 3526
 
 
-def SignUp_step1():
-    global username
+def SignUp():
+    global r, p, q, C_priv_key, C_pub_key, current
     C = 0
 
     # print("\n Thank you for signing up, please enter your credentials below : \n")
@@ -52,95 +56,97 @@ def SignUp_step1():
     username = "jules"
     password = "password"
 
+
     # A checker
     server_url = "http://localhost:8080"
     signup_route = "/signup"
     url = server_url + signup_route
+    if current == 1 :
+        Hp = H(password)
+        C = pow(Hp, r, p)
 
-    Hp = H(password)
-    r = int.from_bytes(os.urandom(256), byteorder="big") % (q) + 1
-    C = pow(Hp, r, p)
+        data = {
+            "request_step": 1,  # Assuming we're doing the first step of the signup process
+            "username": username,  # The desired username
+            "oprf_begin": C,
+        }
 
-    data = {
-        "request_step": 1,  # Assuming we're doing the first step of the signup process
-        "username": username,  # The desired username
-        "oprf_begin": C,
-    }
+        print(f'\n you are signing up as "{username}" with password : "{password}"')
+        print("\n initiating first step of OPRF :")
+        print(f'\n posting : {str(data)}, \nto "{url}" : \n')
 
-    print(f'\n you are signing up as "{username}" with password : "{password}"')
-    print("\n initiating first step of OPRF :")
-    print(f'\n posting : {str(data)}, \nto "{url}" : \n')
+        # Convert the Python dictionary to a JSON string
+        data_json = json.dumps(data)
+        # Set the headers to indicate JSON content
+        headers = {"Content-Type": "application/json"}
 
-    # Convert the Python dictionary to a JSON string
-    data_json = json.dumps(data)
+        response = requests.post(url, data=data_json, headers=headers)
+        if response.ok:
+            data = response.json()
 
-    # Set the headers to indicate JSON content
-    headers = {"Content-Type": "application/json"}
+            print("Signup request, step 1, was successful.")
+            print("Response:", data)
 
-    response = requests.post(url, data=data_json, headers=headers)
-    if response.ok:
-        data = response.json()
+            R = data["oprf"]
+            S_pub_key = data["server_public_key"]
+            current += 1
+            print("Engaging Step 2")
+        else:
+            print("Signup request failed.")
+            print("Status Code:", response.status_code)
+            print("Response:", response.text)
 
-        print("Signup request was successful.")
-        print("Response:", data)
+            Exception("Signup request failed.")
+        # Step 2 of OPRF
+        # to do check types
+            
+        print ('INFO : entering stage 2 of the OPRF')
 
-        R = data["oprf"]
-        S_pub_key = data["server_public_key"]
-    else:
-        print("Signup request failed.")
-        print("Status Code:", response.status_code)
-        print("Response:", response.text)
 
-        Exception("Signup request failed.")
-    # Step 2 of OPRF
-    # to do check types
-    M = computeOPRF(R, S_pub_key)
+        print ("encrypting envelop ...")
+        encrypted_envelope = str (computeOPRF(R, S_pub_key))
+        print("serializing Client pulic key")
+        C_pub_key_bytes = serialize_key (public_key=C_pub_key)
 
-    data = {
-        "request_step": 2,  # int
-        "username": str(username),  # str
-        "encrypted_envelope": M.encode(),  # bytes
-    }
 
-    response = requests.post(url, data=data)
-    if response.ok:
-        print("Signup request was successful.")
-        print("Response:", response.json())
-    else:
-        print("Signup request failed.")
-        print("Status Code:", response.status_code)
-        print("Response:", response.text)
+        data = {
+            "request_step": 2,  # int
+            "username": str(username),  # str
+            "encrypted_envelope": encrypted_envelope,
+            "client_public_key" : C_pub_key_bytes, # bytes
+        }
+
+        data_json = json.dumps(data)
+        # Set the headers to indicate JSON content
+        headers = {"Content-Type": "application/json"}
+
+
+        response = requests.post(url, data=data_json, headers=headers)
+        if response.ok:
+            print("Signup request, step 2, was successful.")
+            print("Response:", response.json())
+        else:
+            print("Signup request failed.")
+            print("Status Code:", response.status_code)
+            print("Response:", response.text)
 
 
 # soit R la réponse du serveur
-def computeOPRF(R, S_pub_key):
+def computeOPRF(R,S_pub_key_bytes):
+    global nonce 
     # calculer la rwd à partir de la réponse du serveur
     # "compute z = r^(-1)"
-    z = 1 / r
-    rwd = pow(R, z)
+    z = pow(int (r), -1, p)
+    rwd = pow(int(R), int(z),int(p))
+    rwd = derive_encryption_key(rwd)
     # rwd : la random key
 
-    # suite : genérer la public and private key
-    global C_priv_key, C_pub_key
+    C_private_key_bytes = serialize_private_key(C_priv_key)
 
-    SignUp_step1()
-
-    S_pub_key_bytes = S_pub_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-
-    concatenated_keys = C_priv_key_bytes + S_pub_key_bytes
-    aesgcm = AESGCM(rwd)
-    nonce = os.urandom(12)
-    ciphertext = aesgcm.encrypt(nonce, concatenated_keys, None)
-    M = nonce + ciphertext
-    return M
-
-    # Encrypt the concatenated keys using AES-GCM, producing ciphertext and tag
-    ciphertext = aesgcm.encrypt(nonce, concatenated_keys, None)
-
-
+    concatenated_keys = C_private_key_bytes + S_pub_key_bytes
+    nonce, encrypted_envelope = encrypt_personal_envelope(rwd, concatenated_keys)
+    return encrypted_envelope
+    #return M
 # login
 
 
@@ -299,3 +305,45 @@ def deserialize_key(pem_public_key_str):
     # Load the public key from PEM format
     public_key = load_pem_public_key(pem_public_key_bytes, backend=default_backend())
     return public_key
+
+
+def derive_encryption_key(rwd, salt=b'', info=b'personal_envelope_encryption'):
+    """
+    Derives an encryption key from the rwd using HKDF.
+    """
+    backend = default_backend()
+    hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        info=info,
+        backend=backend
+    )
+    key = hkdf.derive(rwd.to_bytes((rwd.bit_length() + 7) // 8, 'big'))
+    return key
+
+def encrypt_personal_envelope(encryption_key, message):
+    """
+    Encrypts a message using AES-GCM with the given encryption key.
+    """
+    aesgcm = AESGCM(encryption_key)
+    nonce = os.urandom(12)  # 96-bit nonce is recommended for AES-GCM
+    encrypted = aesgcm.encrypt(nonce, message.encode(), None)
+    return nonce, encrypted
+
+def serialize_private_key(private_key, passphrase=None):
+    # Choose encryption based on whether a passphrase was provided
+    encryption_algorithm = serialization.NoEncryption()
+    if passphrase is not None:
+        encryption_algorithm = serialization.BestAvailableEncryption(passphrase)
+    
+    # Serialize the private key to PEM format
+    pem_private_key = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=encryption_algorithm
+    )
+    
+    # Decode to string if necessary
+    pem_private_key_str = pem_private_key.decode('utf-8')
+    return pem_private_key_str
