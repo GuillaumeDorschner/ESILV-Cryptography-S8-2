@@ -1,3 +1,5 @@
+import ast
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
@@ -6,7 +8,6 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request
 from .AuthManager import AuthManager
 from .database import db
 from .models import Users
-import ast
 
 site = Blueprint("simple_page", __name__, template_folder="templates")
 auth_manager = AuthManager(db)
@@ -19,8 +20,6 @@ def index():
 
 @site.route("/signup", methods=["POST", "GET"])
 def signup():
-
-
     try:
         data = request.json
         if data is None:
@@ -65,7 +64,7 @@ def signup():
             user = Users.query.filter_by(username=username).first()
             user.encrypted_envelope = encrypted_envelope
             user.client_public_key = client_public_key
-            
+
             db.session.commit()
 
             return jsonify({"message": "Signup successful"})
@@ -95,9 +94,11 @@ def login():
             flash("User not found")
             return redirect("/login")
 
-        oprf = auth_manager.perform_oprf(int (oprf_begin), int(user.oprf_key))
+        oprf = auth_manager.perform_oprf(int(oprf_begin), int(user.oprf_key))
 
-        return jsonify({"oprf": oprf, "encrypted_envelope": str(user.encrypted_envelope)})
+        return jsonify(
+            {"oprf": oprf, "encrypted_envelope": str(user.encrypted_envelope)}
+        )
     except Exception as e:
         print(e)
         flash("An error occurred during login")
@@ -112,7 +113,11 @@ def AKE():
         if data is None:
             flash("Invalid request")
 
-        serialize_client_public_key = data.get("client_public_key")
+        username = data.get("username")
+
+        user = Users.query.filter_by(username=username).first()
+
+        serialize_client_public_key = user.client_public_key
 
         shared_key = auth_manager.AKE(serialize_client_public_key)
 
