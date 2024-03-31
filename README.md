@@ -1,6 +1,6 @@
 <div style="display: flex; justify-content: center; align-items: center; width: 500px; margin: 0 auto;">
     <img src="https://avatars.githubusercontent.com/u/44686652?v=4" height=100 style="align-self: center;">
-    <img src="https://media.discordapp.net/attachments/1172462760530034742/1215056991190392893/image.png?ex=65fb5d01&is=65e8e801&hm=9bdd484fcc715d50b973f4d8feab28ad0862fa68dc7ff435b1b46e8fa6902900&=&format=webp&quality=lossless&width=920&height=936" height=100 style="align-self: center;">
+    <img alt="image" src="https://github.com/GuillaumeDorschner/ESILV-Cryptography-S8-1/assets/44686652/43f3aba2-7fcc-46a9-b818-73c2ad932501" height=100 style="align-self: center;">
     <div style="padding: 20px; text-align: center;">
         <h3 style="font-size: 16px;">Project CryptoGraphie - 2</h3>
         <h3 style="font-size: 16px;">Guillaume Dorschner & Jules Deleuse</h3>
